@@ -1,4 +1,4 @@
-# sneaky-cmup-10
+# sneaky-cmup-9
 
 > [!IMPORTANT] 
 > Dont push commits
