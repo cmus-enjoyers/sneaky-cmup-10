@@ -1,4 +1,3 @@
-import gleam/io
 import utils
 
 @external(javascript, "./fs.mjs", "writeFileSync")
@@ -9,5 +8,5 @@ pub const music_directory = "~/music"
 pub const cmus_playlists_directory = "~/.config/cmus/playlists/"
 
 pub fn main() {
-  io.println(utils.banner("Hello from cmus!"))
+  utils.print_banner("Hello from cmus! \n hello!")
 }
