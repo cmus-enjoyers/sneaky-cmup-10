@@ -1,12 +1,12 @@
 import utils
-
-@external(javascript, "./fs.mjs", "writeFileSync")
-pub fn write_file(path: String, content: String) -> Result(string, string)
+import gleam/io
+import fs
+import gleam/result
 
 pub const music_directory = "~/music"
 
-pub const cmus_playlists_directory = "~/.config/cmus/playlists/"
+pub const cmus_playlists_directory = "/home/vktrenokh/.config/cmus/playlists/"
 
 pub fn main() {
-  utils.print_banner("Hello from cmus! \n hello!")
+  fs.ls(cmus_playlists_directory) |> result.map(io.debug)
 }
