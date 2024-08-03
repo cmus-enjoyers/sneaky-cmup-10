@@ -1,4 +1,3 @@
-import gleam/io
 import os
 
 @external(javascript, "./node_fs.mjs", "writeFileSync")
