@@ -1,4 +1,4 @@
-import { Ok as GleamOk, Error as GleamError } from "./gleam.mjs";
+import { Ok as GleamOk, Error as GleamError, toList } from "./gleam.mjs";
 import {
   writeFileSync as _writeFileSync,
   readdirSync as _readdirSync,
@@ -16,4 +16,4 @@ export const result = (f) => {
 export const writeFileSync = (path, content) =>
   result(() => _writeFileSync(normalize(path), content));
 
-export const readdirSync = (path) => result(() => _readdirSync(path));
+export const readdirSync = (path) => result(() => toList(_readdirSync(path)));

@@ -1,5 +1,5 @@
-import os
 import gleam/io
+import os
 
 @external(javascript, "./node_fs.mjs", "writeFileSync")
 pub fn write_file(path: String, content: String) -> Result(string, string)
