@@ -9,6 +9,10 @@ pub const music_directory = "~/music"
 
 pub const cmus_playlists_directory = "~/.config/cmus/playlists/"
 
+pub type Playlists {
+  // TODO: you know what to do here.
+}
+
 pub fn is_non_playlist(playlist: String) -> Bool {
   playlist |> string.starts_with(".") |> bool.negate
 }
