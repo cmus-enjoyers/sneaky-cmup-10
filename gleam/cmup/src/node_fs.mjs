@@ -2,10 +2,11 @@ import { Ok as GleamOk, Error as GleamError, toList } from "./gleam.mjs";
 import {
   writeFileSync as _writeFileSync,
   readdirSync as _readdirSync,
+  readFileSync as _readFileSync,
 } from "node:fs";
 import { normalize } from "node:path";
 
-export const result = (f) => {
+export const tryCatch = (f) => {
   try {
     return new GleamOk(f());
   } catch (e) {
@@ -14,6 +15,6 @@ export const result = (f) => {
 };
 
 export const writeFileSync = (path, content) =>
-  result(() => _writeFileSync(normalize(path), content));
+  tryCatch(() => _writeFileSync(normalize(path), content));
 
-export const readdirSync = (path) => result(() => toList(_readdirSync(path)));
+export const readdirSync = (path) => tryCatch(() => toList(_readdirSync(path)));

@@ -4,7 +4,7 @@ import os
 pub fn write_file(path: String, content: String) -> Result(string, string)
 
 @external(javascript, "./node_fs.mjs", "readdirSync")
-pub fn ls(path: String) -> Result(List(String), string)
+pub fn ls(path: String) -> Result(List(String), String)
 
 /// Fixes nodejs's ~ symbol not recognized
 pub fn path(path: String) -> String {
