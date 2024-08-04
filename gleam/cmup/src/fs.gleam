@@ -1,5 +1,7 @@
 import os
 
+// TODO: Fix error types in Result's
+
 @external(javascript, "./node_fs.mjs", "writeFileSync")
 pub fn write_file(path: String, content: String) -> Result(string, string)
 
