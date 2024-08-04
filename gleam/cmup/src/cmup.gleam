@@ -25,9 +25,14 @@ pub fn is_non_playlist(playlist: String) -> Bool {
 
 pub fn convert_playlist_with_name_to_playlist_writable(
   playlist: PlaylistNameWithPath,
-) -> Result(PlaylistWritable, String) {
-  fs.ls(playlist.path)
-  |> result.map(fn(music) { Playlist(name: playlist.name, tracks: music) })
+) -> PlaylistWritable {
+  case
+    fs.ls(playlist.path)
+    |> result.map(fn(music) { Playlist(name: playlist.name, tracks: music) })
+  {
+    Ok(value) -> value
+    Error(_) -> panic as "Cannot read dir for some reason... :("
+  }
 }
 
 pub fn convert_to_playlist_with_path(playlist: String) -> PlaylistNameWithPath {
@@ -37,21 +42,16 @@ pub fn convert_to_playlist_with_path(playlist: String) -> PlaylistNameWithPath {
   )
 }
 
-pub fn filter_and_convert(playlists: List(String)) -> List(PlaylistNameWithPath) {
+pub fn filter_and_convert(playlists: List(String)) -> List(PlaylistWritable) {
   playlists
   |> list.filter(is_non_playlist)
   |> list.map(convert_to_playlist_with_path)
   |> list.map(convert_playlist_with_name_to_playlist_writable)
 }
 
-pub fn convert_to_writable_playlists(playlists: List(PlaylistNameWithPath)) {
-  playlist |> 
-}
-
 pub fn main() {
   fs.path(music_directory)
   |> fs.ls
   |> result.map(filter_and_convert)
-  |> result.try(convert_to_writable_playlists)
   |> io.debug
 }
