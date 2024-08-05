@@ -9,7 +9,7 @@ import gleam/string
 
 pub const music_directory = "~/music"
 
-pub const cmus_playlists_directory = "~/.config/cmus/playlists/"
+pub const cmus_playlists_directory = "~/.config/cmus/playlists"
 
 pub type PlaylistWritable {
   Playlist(name: String, tracks: List(String))
@@ -58,11 +58,23 @@ pub fn filter_and_convert(playlists: List(String)) -> List(PlaylistWritable) {
   |> list.map(convert_playlist_with_name_to_playlist_writable)
 }
 
-pub fn main() {
-  io.debug(fs.join_paths(["~/.config", "hypr", "/scripts"]))
+pub fn write_playlist(playlist: PlaylistWritable) {
+  playlist.tracks |> string.join(with: "\n") |> fs.write(playlist.name, _)
+}
 
-  fs.path(music_directory)
+pub fn write_playlists(
+  playlists: List(PlaylistWritable),
+) {
+  playlists
+  |> list.try_map(write_playlist) 
+}
+
+pub fn main() {
+  case fs.path(music_directory)
   |> fs.ls
   |> result.map(filter_and_convert)
-  |> io.debug
+  |> result.try(write_playlists) {
+      Ok(_) -> "Successfuly updated playlists :3"
+      Error(_) -> "Got an unexpected error..."
+    } |> io.debug
 }
