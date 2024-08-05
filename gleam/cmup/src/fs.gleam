@@ -1,4 +1,5 @@
 import os
+import gleam/string
 
 // TODO: Fix error types in Result's
 
@@ -14,4 +15,8 @@ pub fn path(path: String) -> String {
     "~" <> path -> os.home() <> path
     _ -> path
   }
+}
+
+pub fn joinPath(paths: List(String)) -> String {
+  string.join(paths, with: "/") |> path
 }

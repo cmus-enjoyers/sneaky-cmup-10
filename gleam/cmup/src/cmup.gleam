@@ -23,6 +23,10 @@ pub fn is_non_playlist(playlist: String) -> Bool {
   playlist |> string.starts_with(".") |> bool.negate
 }
 
+pub fn playlistsPath(paths: List(String)) {
+  fs.joinPath(list.prepend())
+}
+
 pub fn convert_playlist_with_name_to_playlist_writable(
   playlist: PlaylistNameWithPath,
 ) -> PlaylistWritable {
