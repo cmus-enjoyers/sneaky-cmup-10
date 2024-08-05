@@ -40,6 +40,7 @@ pub fn convert_playlist_with_name_to_playlist_writable(
     })
   {
     Ok(value) -> value
+    // TODO: Maybe remove this panic
     Error(_) -> panic as "Cannot read dir for some reason... :("
   }
 }
