@@ -23,8 +23,8 @@ pub fn is_non_playlist(playlist: String) -> Bool {
   playlist |> string.starts_with(".") |> bool.negate
 }
 
-pub fn playlistsPath(paths: List(String)) {
-  fs.joinPath(list.prepend())
+pub fn cmus_music_path(paths: List(String)) {
+  fs.join_paths(paths) |> fs.join_path(cmus_playlists_directory, _)
 }
 
 pub fn convert_playlist_with_name_to_playlist_writable(
@@ -32,7 +32,12 @@ pub fn convert_playlist_with_name_to_playlist_writable(
 ) -> PlaylistWritable {
   case
     fs.ls(playlist.path)
-    |> result.map(fn(music) { Playlist(name: playlist.name, tracks: music) })
+    |> result.map(fn(music) {
+      Playlist(
+        name: playlist.name,
+        tracks: music |> list.map(fn(music) { cmus_music_path([music]) }),
+      )
+    })
   {
     Ok(value) -> value
     Error(_) -> panic as "Cannot read dir for some reason... :("
@@ -54,6 +59,8 @@ pub fn filter_and_convert(playlists: List(String)) -> List(PlaylistWritable) {
 }
 
 pub fn main() {
+  io.debug(fs.join_paths(["~/.config", "hypr", "/scripts"]))
+
   fs.path(music_directory)
   |> fs.ls
   |> result.map(filter_and_convert)
