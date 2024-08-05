@@ -59,7 +59,8 @@ pub fn filter_and_convert(playlists: List(String)) -> List(PlaylistWritable) {
 }
 
 pub fn write_playlist(playlist: PlaylistWritable) {
-  playlist.tracks |> string.join(with: "\n") |> fs.write(playlist.name, _)
+  playlist.tracks |> string.join(with: "\n") |>
+  fs.write(fs.join_path(cmus_playlists_directory, playlist.name), _)
 }
 
 pub fn write_playlists(
@@ -75,6 +76,6 @@ pub fn main() {
   |> result.map(filter_and_convert)
   |> result.try(write_playlists) {
       Ok(_) -> "Successfuly updated playlists :3"
-      Error(_) -> "Got an unexpected error..."
+      Error(err) -> err //"Got an unexpected error..."
     } |> io.debug
 }

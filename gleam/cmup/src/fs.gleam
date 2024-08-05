@@ -18,7 +18,7 @@ pub fn path(path: String) -> String {
 }
 
 pub fn join_path(a: String, b: String) -> String {
-  a <> "/" <> b
+  path(a <> "/" <> b)
 }
 
 pub fn join_paths(paths: List(String)) -> String {
