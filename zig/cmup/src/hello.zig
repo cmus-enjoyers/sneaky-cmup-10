@@ -1,7 +1,7 @@
 const std = @import("std");
 const math = std.math;
 
-pub fn main() void {
+pub fn main() !void {
     std.debug.print("Hello, world!\n", .{});
 
     // const number: ?u8 = 100 / 0;
@@ -36,4 +36,14 @@ pub fn main() void {
 
     std.debug.print("{}\n", .{a[6]}); // should print 255
     std.debug.print("{any}\n", .{a});
+
+    var music = try std.fs.openDirAbsolute("/", .{ .iterate = true });
+
+    defer music.close();
+
+    var iter = music.iterate();
+
+    while (try iter.next()) |entry| {
+        std.debug.print("Something: {}\n", .{entry});
+    }
 }
