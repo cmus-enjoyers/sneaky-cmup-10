@@ -4,10 +4,6 @@ const math = std.math;
 pub fn main() !void {
     std.debug.print("Hello, world!\n", .{});
 
-    // const number: ?u8 = 100 / 0;
-    //
-    // std.debug.print("num {}", .{number});
-
     std.debug.print(":) " ** 100, .{});
     std.debug.print("\n", .{});
 
@@ -44,6 +40,11 @@ pub fn main() !void {
     var iter = music.iterate();
 
     while (try iter.next()) |entry| {
-        std.debug.print("Something: {}\n", .{entry});
+        std.debug.print("Something: {s}\n", .{entry.name});
     }
+
+    const ruski = "афвафывавф";
+    const ruski_num = [_]u8{ 208, 176 };
+    const ruski_num_ruski_num = ruski_num ** 100;
+    std.debug.print("Something again: {any}, {s}, {any}, {s}, {s}", .{ ruski, ruski, @TypeOf(ruski), ruski_num, ruski_num_ruski_num });
 }
