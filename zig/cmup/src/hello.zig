@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const CmupPlaylist = struct { name: []const u8, content: []const u8 };
+const CmupPlaylist = struct { name: []const u8 = "Hello World", content: []const u8 };
 
 pub fn main() !void {
     std.debug.print("Hello, world!\n", .{});
@@ -47,9 +47,9 @@ pub fn main() !void {
     const ruski = "афвафывавф";
     const ruski_num = [_]u8{ 208, 176 };
     const ruski_num_ruski_num = ruski_num ** 100;
-    std.debug.print("Something again: {any}, {s}, {any}, {s}, {s}", .{ ruski, ruski, @TypeOf(ruski), ruski_num, ruski_num_ruski_num });
+    std.debug.print("Something again: {any}, {s}, {any}, {s}, {s}\n", .{ ruski, ruski, @TypeOf(ruski), ruski_num, ruski_num_ruski_num });
 
-    const testing = CmupPlaylist{ .name = "vk____trenokh", .content = "speedcore" };
+    const testing = CmupPlaylist{ .content = "speedcore", .name = "Hello World World Vktrenokh" };
 
-    std.debug.print("Vktrenokh playlist: {any}", .{testing});
+    std.debug.print("Vktrenokh playlist: Name: {s}, Content: {s}", .{ testing.name, testing.content });
 }
