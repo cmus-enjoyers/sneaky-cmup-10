@@ -2,6 +2,15 @@ const std = @import("std");
 
 const CmupPlaylist = struct { name: []const u8 = "Hello World", content: []const u8 };
 
+const Complex = enum { a, b };
+
+fn getComplex(value: Complex) []const u8 {
+    return switch (value) {
+        Complex.a => "A is bad :)",
+        Complex.b => "B is bad :(",
+    };
+}
+
 pub fn main() !void {
     std.debug.print("Hello, world!\n", .{});
 
@@ -51,5 +60,7 @@ pub fn main() !void {
 
     const testing = CmupPlaylist{ .content = "speedcore", .name = "Hello World World Vktrenokh" };
 
-    std.debug.print("Vktrenokh playlist: Name: {s}, Content: {s}", .{ testing.name, testing.content });
+    std.debug.print("Vktrenokh playlist: Name: {s}, Content: {s}\n", .{ testing.name, testing.content });
+
+    std.debug.print("Enum: {s}", .{getComplex(Complex.b)});
 }
