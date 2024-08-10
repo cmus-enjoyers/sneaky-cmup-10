@@ -2,6 +2,13 @@ const std = @import("std");
 
 const CmupPlaylist = struct { name: []const u8 = "Hello World", content: []const u8 };
 
+const TestEnum = enum {
+    b,
+    c,
+};
+
+const Test = union(TestEnum) { b: u8, c: []const u8 };
+
 const Complex = enum { a, b };
 
 fn getComplex(value: Complex) []const u8 {
@@ -62,5 +69,12 @@ pub fn main() !void {
 
     std.debug.print("Vktrenokh playlist: Name: {s}, Content: {s}\n", .{ testing.name, testing.content });
 
-    std.debug.print("Enum: {s}", .{getComplex(Complex.b)});
+    std.debug.print("Enum: {s} \n", .{getComplex(Complex.b)});
+
+    const y = Test{ .c = "dafdasf" };
+
+    switch (y) {
+        TestEnum.b => |v| std.debug.print("Tagged Union Number: {}", .{v}),
+        TestEnum.c => |v| std.debug.print("Tagged Union: {s}", .{v}),
+    }
 }
