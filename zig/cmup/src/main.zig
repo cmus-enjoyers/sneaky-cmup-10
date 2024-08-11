@@ -1,24 +1,85 @@
 const std = @import("std");
+const c = @cImport({
+    @cInclude("hello-c.h");
+});
 
-pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+const CmupPlaylist = struct { name: []const u8 = "Hello World", content: []const u8 };
 
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
+const TestEnum = enum {
+    b,
+    c,
+};
 
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
+const Test = union(TestEnum) { b: u8, c: []const u8 };
 
-    try bw.flush(); // don't forget to flush!
+const Complex = enum { a, b };
+
+fn getComplex(value: Complex) []const u8 {
+    return switch (value) {
+        Complex.a => "A is bad :)",
+        Complex.b => "B is bad :(",
+    };
 }
 
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
+pub fn main() !void {
+    std.debug.print("Hello, world!\n", .{});
+
+    std.debug.print(":) " ** 100, .{});
+    std.debug.print("\n", .{});
+
+    var x: u8 = 100;
+
+    std.debug.print("x: {}\n", .{x});
+
+    const ptr = &x;
+
+    ptr.* = 101;
+
+    std.debug.print("x: {}\n", .{x});
+
+    const @"Funny variable" = 50;
+
+    std.debug.print("{}\n", .{@"Funny variable"});
+
+    const a = [_:255]i32{
+        1,
+        2,
+        4,
+        0,
+        1,
+        2,
+    };
+
+    std.debug.print("{}\n", .{a[6]}); // should print 255
+    std.debug.print("{any}\n", .{a});
+
+    var music = try std.fs.openDirAbsolute("/", .{ .iterate = true });
+
+    defer music.close();
+
+    var iter = music.iterate();
+
+    while (try iter.next()) |entry| {
+        std.debug.print("Something: {s}\n", .{entry.name});
+    }
+
+    const ruski = "афвафывавф";
+    const ruski_num = [_]u8{ 208, 176 };
+    const ruski_num_ruski_num = ruski_num ** 100;
+    std.debug.print("Something again: {any}, {s}, {any}, {s}, {s}\n", .{ ruski, ruski, @TypeOf(ruski), ruski_num, ruski_num_ruski_num });
+
+    const testing = CmupPlaylist{ .content = "speedcore", .name = "Hello World World Vktrenokh" };
+
+    std.debug.print("Vktrenokh playlist: Name: {s}, Content: {s}\n", .{ testing.name, testing.content });
+
+    std.debug.print("Enum: {s} \n", .{getComplex(Complex.b)});
+
+    const y = Test{ .c = "dafdasf" };
+
+    switch (y) {
+        TestEnum.b => |v| std.debug.print("Tagged Union Number: {}", .{v}),
+        TestEnum.c => |v| std.debug.print("Tagged Union: {s}", .{v}),
+    }
+
+    std.debug.print("from c: {}", .{c.do_thing()});
 }
