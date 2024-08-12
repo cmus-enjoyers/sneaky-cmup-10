@@ -21,6 +21,15 @@ fn getComplex(value: Complex) []const u8 {
     };
 }
 
+pub fn twice(function: fn () void) void {
+    function();
+    function();
+}
+
+pub fn logSomething() void {
+    std.debug.print("Hello\n", .{});
+}
+
 pub fn main() !void {
     std.debug.print("Hello, world!\n", .{});
 
@@ -81,5 +90,7 @@ pub fn main() !void {
         TestEnum.c => |v| std.debug.print("Tagged Union: {s}", .{v}),
     }
 
-    std.debug.print("from c: {}", .{c.do_thing()});
+    std.debug.print("from c: {}\n", .{c.do_thing()});
+
+    twice(logSomething);
 }
