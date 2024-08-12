@@ -26,6 +26,10 @@ pub fn twice(function: fn () void) void {
     function();
 }
 
+pub fn getError() !u8 {
+    return error.ReachedZero;
+}
+
 pub fn logSomething() void {
     std.debug.print("Hello\n", .{});
 }
@@ -93,4 +97,10 @@ pub fn main() !void {
     std.debug.print("from c: {}\n", .{c.do_thing()});
 
     twice(logSomething);
+
+    const something = getError() catch |err| switch (err) {
+        error.ReachedZero => 0,
+    };
+
+    std.debug.print("alalalal, {}\n", .{something});
 }
