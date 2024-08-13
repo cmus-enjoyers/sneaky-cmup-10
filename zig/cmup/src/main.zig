@@ -103,4 +103,12 @@ pub fn main() !void {
     };
 
     std.debug.print("alalalal, {}\n", .{something});
+
+    const thing: anyerror!u8 = error.Something;
+
+    if (thing) |value| {
+        std.debug.print("got value, {}\n", .{value + 1});
+    } else |err| {
+        std.debug.print("dafasdfasdfasdf, {}", .{err});
+    }
 }
