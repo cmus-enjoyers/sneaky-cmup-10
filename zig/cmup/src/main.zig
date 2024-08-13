@@ -1,114 +1,34 @@
 const std = @import("std");
-const c = @cImport({
-    @cInclude("hello-c.h");
-});
 
-const CmupPlaylist = struct { name: []const u8 = "Hello World", content: []const u8 };
+const gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
-const TestEnum = enum {
-    b,
-    c,
-};
+pub fn getCmupThings(allocator: std.mem.Allocator) anyerror!std.ArrayListAligned([]const u8, null) {
+    var dir = try std.fs.openDirAbsolute("/", .{ .iterate = true });
+    defer dir.close();
 
-const Test = union(TestEnum) { b: u8, c: []const u8 };
+    var iter = dir.iterate();
 
-const Complex = enum { a, b };
+    var result = std.ArrayList([]const u8).init(allocator);
 
-fn getComplex(value: Complex) []const u8 {
-    return switch (value) {
-        Complex.a => "A is bad :)",
-        Complex.b => "B is bad :(",
-    };
+    while (try iter.next()) |value| {
+        try result.append(value.name);
+    }
+
+    return result;
 }
 
-pub fn twice(function: fn () void) void {
-    function();
-    function();
-}
-
-pub fn getError() !u8 {
-    return error.ReachedZero;
-}
-
-pub fn logSomething() void {
-    std.debug.print("Hello\n", .{});
+pub fn printArrayOfStrings(str_array: [][]const u8) void {
+    for (str_array) |item| {
+        std.debug.print("{s}\n", .{item});
+    }
 }
 
 pub fn main() !void {
-    std.debug.print("Hello, world!\n", .{});
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
 
-    std.debug.print(":) " ** 100, .{});
-    std.debug.print("\n", .{});
+    const allocator = arena.allocator();
 
-    var x: u8 = 100;
-
-    std.debug.print("x: {}\n", .{x});
-
-    const ptr = &x;
-
-    ptr.* = 101;
-
-    std.debug.print("x: {}\n", .{x});
-
-    const @"Funny variable" = 50;
-
-    std.debug.print("{}\n", .{@"Funny variable"});
-
-    const a = [_:255]i32{
-        1,
-        2,
-        4,
-        0,
-        1,
-        2,
-    };
-
-    std.debug.print("{}\n", .{a[6]}); // should print 255
-    std.debug.print("{any}\n", .{a});
-
-    var music = try std.fs.openDirAbsolute("/", .{ .iterate = true });
-
-    defer music.close();
-
-    var iter = music.iterate();
-
-    while (try iter.next()) |entry| {
-        std.debug.print("Something: {s}\n", .{entry.name});
-    }
-
-    const ruski = "афвафывавф";
-    const ruski_num = [_]u8{ 208, 176 };
-    const ruski_num_ruski_num = ruski_num ** 100;
-    std.debug.print("Something again: {any}, {s}, {any}, {s}, {s}\n", .{ ruski, ruski, @TypeOf(ruski), ruski_num, ruski_num_ruski_num });
-
-    const testing = CmupPlaylist{ .content = "speedcore", .name = "Hello World World Vktrenokh" };
-
-    std.debug.print("Vktrenokh playlist: Name: {s}, Content: {s}\n", .{ testing.name, testing.content });
-
-    std.debug.print("Enum: {s} \n", .{getComplex(Complex.b)});
-
-    const y = Test{ .c = "dafdasf" };
-
-    switch (y) {
-        TestEnum.b => |v| std.debug.print("Tagged Union Number: {}", .{v}),
-        TestEnum.c => |v| std.debug.print("Tagged Union: {s}", .{v}),
-    }
-
-    std.debug.print("from c: {}\n", .{c.do_thing()});
-
-    twice(logSomething);
-
-    const something = getError() catch |err| switch (err) {
-        error.ReachedZero => 0,
-    };
-
-    std.debug.print("alalalal, {}\n", .{something});
-
-    const thing: anyerror!u8 = error.Something;
-
-    if (thing) |value| {
-        std.debug.print("got value, {}\n", .{value + 1});
-    } else |err| {
-        std.debug.print("dafasdfasdfasdf, {}", .{err});
-    }
+    const cmup = try getCmupThings(allocator);
+    printArrayOfStrings(cmup.items);
 }
