@@ -8,6 +8,16 @@ const CmupPlaylist = struct {
     path: []const u8,
 };
 
+pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: std.fs.Dir.Entry) CmupPlaylist {
+    // NOTE: value.name string will be released and will not be avaailable,
+    // to fix this we copy it
+    const name = try allocator.dupe(u8, entry.name);
+
+    const path = try std.fs.path.join(allocator, &.{ cmus_path, name });
+
+    return CmupPlaylist{ .name = name, .path = path, .content = "" };
+}
+
 pub fn getCmupThings(allocator: std.mem.Allocator) anyerror!std.ArrayList(CmupPlaylist) {
     var dir = try std.fs.openDirAbsolute(cmus_path, .{ .iterate = true });
 
@@ -16,14 +26,7 @@ pub fn getCmupThings(allocator: std.mem.Allocator) anyerror!std.ArrayList(CmupPl
     var result = std.ArrayList(CmupPlaylist).init(allocator);
 
     while (try iter.next()) |value| {
-        // NOTE: value.name string will be released and will not be avaailable,
-        // to fix this we copy it
-        const name = try allocator.dupe(u8, value.name);
-
-        const path = try std.fs.path.join(allocator, &.{ cmus_path, name });
-
-        const playlist = CmupPlaylist{ .name = name, .path = path, .content = "" };
-        try result.append(playlist);
+        try result.append(createCmupPlaylist(allocator, value));
     }
 
     return result;
