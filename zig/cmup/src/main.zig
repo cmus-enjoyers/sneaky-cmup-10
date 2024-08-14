@@ -8,29 +8,36 @@ const CmupPlaylist = struct {
     path: []const u8,
 };
 
-pub fn getCmupThings(allocator: std.mem.Allocator) anyerror!std.ArrayListAligned(CmupPlaylist, null) {
+pub fn getCmupThings(allocator: std.mem.Allocator) anyerror!std.ArrayList(CmupPlaylist) {
     var dir = try std.fs.openDirAbsolute(cmus_path, .{ .iterate = true });
-    defer dir.close();
 
     var iter = dir.iterate();
 
     var result = std.ArrayList(CmupPlaylist).init(allocator);
 
     while (try iter.next()) |value| {
-        const playlist = CmupPlaylist{ .name = value.name, .path = try std.fs.path.join(allocator, &.{ cmus_path, value.name }), .content = "" };
+        // NOTE: value.name string will be released and will not be avaailable,
+        // to fix this we copy it
+        const name = try allocator.dupe(u8, value.name);
+
+        const path = try std.fs.path.join(allocator, &.{ cmus_path, name });
+
+        const playlist = CmupPlaylist{ .name = name, .path = path, .content = "" };
         try result.append(playlist);
     }
 
     return result;
 }
 
-pub fn printCmupPlaylist(playlist: CmupPlaylist) void {
-    std.debug.print("Playlist {s}, on path {s}, with music amount {}\n", .{ playlist.name, playlist.path, playlist.content.len });
+pub fn printCmupPlaylist(playlist: CmupPlaylist) !void {
+    const outfile = std.io.getStdOut();
+
+    try outfile.writer().print("Playlist {s} on path {s} with musics: {}\n", .{ playlist.name, playlist.path, playlist.content.len });
 }
 
-pub fn printCmupPlaylists(playlists: []const CmupPlaylist) void {
+pub fn printCmupPlaylists(playlists: []const CmupPlaylist) !void {
     for (playlists) |item| {
-        printCmupPlaylist(item);
+        try printCmupPlaylist(item);
     }
 }
 
@@ -41,5 +48,6 @@ pub fn main() !void {
     const allocator = arena.allocator();
 
     const cmup = try getCmupThings(allocator);
-    printCmupPlaylists(cmup.items);
+    try printCmupPlaylists(cmup.items);
+    cmup.deinit();
 }
