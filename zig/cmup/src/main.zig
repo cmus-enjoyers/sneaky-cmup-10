@@ -3,7 +3,7 @@ const std = @import("std");
 const cmus_path = "/home/vktrenokh/music";
 const cmus_playlist_path = "/home/vktrenokh/.config/cmus/playlists";
 
-const CmupPlaylist = struct { name: []const u8, content: [][]const u8, path: []const u8, sub_playlist: ?*CmupPlaylist = null };
+const CmupPlaylist = struct { name: []const u8, content: [][]const u8, path: []const u8, sub_playlist: ?*const CmupPlaylist = null };
 
 const cmup_used_music_extensions: []const []const u8 = &[_][]const u8{ "flac", "mp3", "opus" };
 
