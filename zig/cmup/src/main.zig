@@ -1,14 +1,11 @@
 const std = @import("std");
 
 const cmus_path = "/home/vktrenokh/music";
+const cmus_playlist_path = "/home/vktrenokh/.config/cmus/playlists";
 
-const CmupPlaylist = struct {
-    name: []const u8,
-    content: [][]const u8,
-    path: []const u8,
-};
+const CmupPlaylist = struct { name: []const u8, content: [][]const u8, path: []const u8, sub_playlist: ?*CmupPlaylist = null };
 
-const cmup_used_music_extensions: []const []const u8 = &[_][]const u8{ "flac", "mp3" };
+const cmup_used_music_extensions: []const []const u8 = &[_][]const u8{ "flac", "mp3", "opus" };
 
 pub fn isMusic(file_name: []const u8) bool {
     for (cmup_used_music_extensions) |ext| {
@@ -68,7 +65,22 @@ pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: []const u8) anyer
     return CmupPlaylist{ .name = entry, .path = path, .content = content };
 }
 
-pub fn cmup(allocator: std.mem.Allocator) anyerror!std.ArrayList(CmupPlaylist) {
+pub fn writeCmupPlaylist(allocator: std.mem.Allocator, playlist: CmupPlaylist) !void {
+    var dir = try std.fs.openDirAbsolute(cmus_playlist_path, .{});
+    defer dir.close();
+
+    var file = try dir.createFile(playlist.name, .{});
+    defer file.close();
+
+    for (playlist.content) |music| {
+        const size = try file.write(try std.mem.concat(allocator, u8, &.{ music, "\n" }));
+        _ = size;
+    }
+
+    std.debug.print("wrote {s}\n", .{playlist.name});
+}
+
+pub fn cmup(allocator: std.mem.Allocator, write: ?bool) anyerror!std.ArrayList(CmupPlaylist) {
     const playlists = try getDirEntryNames(allocator, cmus_path);
 
     var result = std.ArrayList(CmupPlaylist).init(allocator);
@@ -80,6 +92,10 @@ pub fn cmup(allocator: std.mem.Allocator) anyerror!std.ArrayList(CmupPlaylist) {
 
         const playlist = try createCmupPlaylist(allocator, value);
         try result.append(playlist);
+
+        if (write orelse false) {
+            try writeCmupPlaylist(allocator, playlist);
+        }
     }
 
     return result;
@@ -107,7 +123,7 @@ pub fn main() !void {
 
     const allocator = arena.allocator();
 
-    const result = try cmup(allocator);
+    const result = try cmup(allocator, true);
     try printCmupPlaylists(result.items);
     result.deinit();
 }
