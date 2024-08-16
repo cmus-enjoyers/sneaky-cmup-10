@@ -8,6 +8,22 @@ const CmupPlaylist = struct {
     path: []const u8,
 };
 
+const cmup_used_music_extensions: []const []const u8 = &[_][]const u8{ "flac", "mp3" };
+
+pub fn isMusic(file_name: []const u8) bool {
+    for (cmup_used_music_extensions) |ext| {
+        if (file_name.len <= ext.len) {
+            return false;
+        }
+
+        if (std.ascii.endsWithIgnoreCase(file_name, ext)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 pub fn getDirEntryNames(allocator: std.mem.Allocator, path: []const u8) anyerror!std.ArrayList([]const u8) {
     var dir = try std.fs.openDirAbsolute(path, .{ .iterate = true });
     defer dir.close();
@@ -22,6 +38,12 @@ pub fn getDirEntryNames(allocator: std.mem.Allocator, path: []const u8) anyerror
     return result;
 }
 
+pub fn addMusicToPlaylist(allocator: std.mem.Allocator, path: []const u8, result: *std.ArrayList([]const u8), entry: std.fs.Dir.Entry) !void {
+    if (isMusic(entry.name)) {
+        try result.append(try std.fs.path.join(allocator, &.{ path, entry.name }));
+    }
+}
+
 pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8) anyerror![][]const u8 {
     var dir = try std.fs.openDirAbsolute(path, .{ .iterate = true });
     var iterator = dir.iterate();
@@ -30,7 +52,7 @@ pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8) anyerror
 
     while (try iterator.next()) |item| {
         switch (item.kind) {
-            .file => try result.append(try std.fs.path.join(allocator, &.{ path, item.name })),
+            .file => try addMusicToPlaylist(allocator, path, &result, item),
             // TODO: do something with subplaylist
             else => {},
         }
@@ -46,7 +68,7 @@ pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: []const u8) anyer
     return CmupPlaylist{ .name = entry, .path = path, .content = content };
 }
 
-pub fn getCmupThings(allocator: std.mem.Allocator) anyerror!std.ArrayList(CmupPlaylist) {
+pub fn cmup(allocator: std.mem.Allocator) anyerror!std.ArrayList(CmupPlaylist) {
     const playlists = try getDirEntryNames(allocator, cmus_path);
 
     var result = std.ArrayList(CmupPlaylist).init(allocator);
@@ -85,7 +107,7 @@ pub fn main() !void {
 
     const allocator = arena.allocator();
 
-    const cmup = try getCmupThings(allocator);
-    try printCmupPlaylists(cmup.items);
-    cmup.deinit();
+    const result = try cmup(allocator);
+    try printCmupPlaylists(result.items);
+    result.deinit();
 }
