@@ -65,16 +65,18 @@ pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: []const u8) anyer
     return CmupPlaylist{ .name = entry, .path = path, .content = content };
 }
 
-pub fn writeCmupPlaylist(allocator: std.mem.Allocator, playlist: CmupPlaylist) !void {
+pub fn writeCmupPlaylist(playlist: CmupPlaylist) !void {
     var dir = try std.fs.openDirAbsolute(cmus_playlist_path, .{});
     defer dir.close();
 
     var file = try dir.createFile(playlist.name, .{});
     defer file.close();
 
+    const newline = comptime "\n";
+
     for (playlist.content) |music| {
-        const size = try file.write(try std.mem.concat(allocator, u8, &.{ music, "\n" }));
-        _ = size;
+        try file.writeAll(music);
+        try file.writeAll(newline);
     }
 
     std.debug.print("wrote {s}\n", .{playlist.name});
@@ -94,7 +96,7 @@ pub fn cmup(allocator: std.mem.Allocator, write: ?bool) anyerror!std.ArrayList(C
         try result.append(playlist);
 
         if (write orelse false) {
-            try writeCmupPlaylist(allocator, playlist);
+            try writeCmupPlaylist(playlist);
         }
     }
 
