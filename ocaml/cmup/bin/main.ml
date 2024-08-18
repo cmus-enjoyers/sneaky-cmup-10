@@ -1,10 +1,8 @@
-type name = A | B | C
+let cmus_music_path = "/home/vktrenokh/music"
 
-let get_name x = match x with 
-                 | A -> "Victor"
-                 | B -> "Yenoch"
-                 | C -> "Kuptsov"
+let list_dir path = 
+  Sys.readdir (path) |> Array.to_list
 
-let () = print_endline (get_name A);
-         print_endline (get_name B);
-         print_endline (get_name C)
+let is_not_playlist name = String.starts_with ~prefix:"." name |> Bool.not
+
+let () = list_dir cmus_music_path |> List.filter(is_not_playlist) |> List.iter(print_endline)
