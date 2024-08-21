@@ -31,16 +31,27 @@
 (defun create-playlist (name)
   (let ((path (make-playlist-path name))
         (music-path (make-music-path name)))
-    (make-cmup-playlist :name name :path path :content
-                                      (ls music-path (lambda (str)
-                                        (not (music? str)))))))
+    (make-cmup-playlist
+     :name name
+     :path path
+     :content (ls music-path (lambda (str)
+                               (not (music? str)))))))
 
 (defun write-playlist (playlist)
   nil)
 
-(defun get-cmup-music ()
- (ls cmup-music-path))
+(defun print-playlist (playlist)
+  (print "Playlist " (cmup-playlist-name playlist) " on path" (cmup-playlist-path playlist)))
 
-(print (mapcar (lambda (x)
-          (create-playlist x))
-        (get-cmup-music)))
+(defun print-playlists (playlists)
+  (dolist (x playlists)
+    (print-playlist x)))
+
+(defun get-cmup-music ()
+  (ls cmup-music-path))
+
+(defvar playlists (mapcar (lambda (x)
+                 (create-playlist x))
+               (get-cmup-music)))
+
+(print-playlists playlists)
