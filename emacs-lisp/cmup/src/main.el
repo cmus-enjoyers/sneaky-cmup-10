@@ -40,7 +40,7 @@
   (let ((content (string-join (cmup-playlist-content playlist) "\n")))
     (let ((content-length (length content)))
       (when (> content-length 0)
-        (print content-length)))))
+        (write-region content nil (cmup-playlist-path playlist))))))
 
 (defun write-playlists (playlists)
   (dolist (x playlists)
