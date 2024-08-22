@@ -41,7 +41,11 @@
   nil)
 
 (defun print-playlist (playlist)
-  (print "Playlist " (cmup-playlist-name playlist) " on path" (cmup-playlist-path playlist)))
+  (princ (concat "Playlist " (cmup-playlist-name playlist)
+                 " on path \n" (cmup-playlist-path playlist)))
+  (let (value)
+    (dolist (x (cmup-playlist-content playlist) value)
+      (princ (concat "   " x "\n")))))
 
 (defun print-playlists (playlists)
   (dolist (x playlists)
@@ -50,8 +54,8 @@
 (defun get-cmup-music ()
   (ls cmup-music-path))
 
-(defvar playlists (mapcar (lambda (x)
+(defvar cmup-playlists (mapcar (lambda (x)
                  (create-playlist x))
                (get-cmup-music)))
 
-(print-playlists playlists)
+(print-playlists cmup-playlists)
