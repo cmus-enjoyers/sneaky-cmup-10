@@ -12,7 +12,6 @@
   (expand-file-name "~/.config/cmus/playlists"))
 
 (defun ls (path &optional filter-fn)
-  "List non-hidden files in path. Optionally filter with filter-fn"
   (cl-remove-if (lambda (str)
                   (or (string-prefix-p "." str)
                       (and filter-fn
@@ -38,7 +37,14 @@
                                (not (music? str)))))))
 
 (defun write-playlist (playlist)
-  nil)
+  (let ((content (string-join (cmup-playlist-content playlist) "\n")))
+    (let ((content-length (length content)))
+      (when (> content-length 0)
+        (print content-length)))))
+
+(defun write-playlists (playlists)
+  (dolist (x playlists)
+    (write-playlist x)))
 
 (defun print-playlist (playlist)
   (princ (concat "Playlist " (cmup-playlist-name playlist)
@@ -58,4 +64,4 @@
                  (create-playlist x))
                (get-cmup-music)))
 
-(print-playlists cmup-playlists)
+(write-playlists cmup-playlists)
