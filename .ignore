@@ -1,3 +1,7 @@
+<<<<<<< HEAD
 .zig-cache
 .zig-out
 _build
+=======
+.git
+>>>>>>> 0830348 (feat: COOL VIBRATIONS)
