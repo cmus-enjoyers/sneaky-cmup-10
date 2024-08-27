@@ -41,6 +41,17 @@ pub fn addMusicToPlaylist(allocator: std.mem.Allocator, path: []const u8, result
     }
 }
 
+pub fn createCmusSubPlaylist(parent_path: []const u8, name: []const u8) !void {
+    _ = parent_path;
+    _ = name;
+}
+
+pub fn printUnsuportedEntryError(name: []const u8) !void {
+    const writer = std.io.getStdErr().writer();
+
+    try writer.print("Unknown entry format at {}\n", .{name});
+}
+
 pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8) anyerror![][]const u8 {
     var dir = try std.fs.openDirAbsolute(path, .{ .iterate = true });
     var iterator = dir.iterate();
@@ -51,6 +62,7 @@ pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8) anyerror
         switch (item.kind) {
             .file => try addMusicToPlaylist(allocator, path, &result, item),
             // TODO: do something with subplaylist
+            .directory => try createCmusSubPlaylist(path, item.name),
             else => {},
         }
     }
@@ -119,13 +131,27 @@ pub fn printCmupPlaylists(playlists: []const CmupPlaylist) !void {
     }
 }
 
+pub fn hasArg(args: [][]u8, arg_name: []const u8) bool {
+    for (args) |arg| {
+        if (std.mem.eql(u8, arg, arg_name)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
+    const args = try std.process.argsAlloc(allocator);
+    defer std.process.argsFree(allocator, args);
 
-    const result = try cmup(allocator, true);
-    try printCmupPlaylists(result.items);
-    result.deinit();
+    const result = try cmup(allocator, hasArg(args, "--write"));
+    defer result.deinit();
+
+    if (!hasArg(args, "--quiet")) {
+        try printCmupPlaylists(result.items);
+    }
 }
