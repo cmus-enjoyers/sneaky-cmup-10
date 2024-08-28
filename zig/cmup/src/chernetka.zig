@@ -1,15 +1,24 @@
 const std = @import("std");
 
-fn testa(ptr: *?*u8) void {
-    var smth: u8 = 40;
+const Tsettb = struct { hello: []const u8 };
+
+fn testa(ptr: *?*Tsettb) void {
+    var smth = Tsettb{
+        .hello = "dfasdfasdfasdf",
+    };
 
     ptr.* = &smth;
 }
 
-pub fn main() void {
-    var ptr: ?*u8 = null;
+fn wrapper() ?*Tsettb {
+    var ptr: ?*Tsettb = null;
 
     testa(&ptr);
 
-    std.debug.print("{}\n", .{ptr.?.*});
+    return &ptr;
+}
+
+pub fn main() void {
+    const t = wrapper();
+    std.debug.print("{}\n", .{t.?.*});
 }
