@@ -3,9 +3,23 @@ const std = @import("std");
 const cmus_path = "/home/vktrenokh/music";
 const cmus_playlist_path = "/home/vktrenokh/.config/cmus/playlists";
 
-const CmupPlaylist = struct { name: []const u8, content: [][]const u8, path: []const u8, sub_playlist: ?*const CmupPlaylist = null };
+const CmupPlaylist = struct {
+    name: []const u8,
+    content: [][]const u8,
+    path: []const u8,
+    sub_playlist: ?*const CmupPlaylist = null,
+};
 
-const cmup_used_music_extensions: []const []const u8 = &[_][]const u8{ "flac", "mp3", "opus" };
+const CmupReadPlaylist = struct {
+    items: [][]const u8,
+    sub_playlist: ?*CmupPlaylist,
+};
+
+const cmup_used_music_extensions: []const []const u8 = &[_][]const u8{
+    "flac",
+    "mp3",
+    "opus",
+};
 
 const reset = "\x1b[0m";
 const green = "\x1b[32m";
@@ -53,38 +67,47 @@ pub fn printUnsuportedEntryError(name: []const u8) !void {
     try writer.print(red ++ "CmupErr" ++ reset ++ ": Unknown entry format at {s}\n", .{name});
 }
 
-pub fn createCmusSubPlaylist(allocator: std.mem.Allocator, parent_path: []const u8, name: []const u8) !void {
-    const path = try std.fs.path.join(allocator, &.{ parent_path, name });
-    const items = try readCmupPlaylist(allocator, path);
-    const writer = std.io.getStdOut().writer();
+pub fn createCmusSubPlaylist(allocator: std.mem.Allocator, ptr: *?*CmupPlaylist, parent_name: []const u8, name: []const u8) !void {
+    const path = try std.fs.path.join(allocator, &.{ parent_name, name });
 
-    for (items) |item| {
-        try writer.print(green ++ "  Item" ++ reset ++ " {s}\n", .{item});
-    }
+    std.debug.print("{s}\n", .{path});
+    var playlist: CmupPlaylist = try createCmupPlaylist(allocator, path);
+
+    ptr.* = &playlist;
 }
 
-pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8) anyerror![][]const u8 {
+pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8, name: []const u8) anyerror!CmupReadPlaylist {
     var dir = try std.fs.openDirAbsolute(path, .{ .iterate = true });
     var iterator = dir.iterate();
+
+    var ptr: ?*CmupPlaylist = null;
 
     var result = std.ArrayList([]const u8).init(allocator);
 
     while (try iterator.next()) |item| {
         switch (item.kind) {
             .file => try addMusicToPlaylist(allocator, path, &result, item),
-            .directory => try createCmusSubPlaylist(allocator, path, item.name),
+            .directory => try createCmusSubPlaylist(allocator, &ptr, name, item.name),
             else => try printUnsuportedEntryError(item.name),
         }
     }
 
-    return result.items;
+    return CmupReadPlaylist{
+        .items = result.items,
+        .sub_playlist = ptr,
+    };
 }
 
 pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: []const u8) anyerror!CmupPlaylist {
     const path = try std.fs.path.join(allocator, &.{ cmus_path, entry });
-    const content = try readCmupPlaylist(allocator, path);
+    const content = try readCmupPlaylist(allocator, path, entry);
 
-    return CmupPlaylist{ .name = entry, .path = path, .content = content };
+    return CmupPlaylist{
+        .name = entry,
+        .path = path,
+        .content = content.items,
+        .sub_playlist = content.sub_playlist,
+    };
 }
 
 pub fn writeCmupPlaylist(playlist: CmupPlaylist) !void {
