@@ -53,11 +53,6 @@ update_playlist:
 
 .close_dir:
   push eax
-  mov eax, testString
-  call printLF 
-  pop eax
-
-  push eax
   mov eax, ebp
   call close_fd
   pop eax

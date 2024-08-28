@@ -7,8 +7,6 @@ section .data
   cmus_playlist_path db "/home/slikedollar/.config/cmus/playlists/",0h
   cmus_playlist_path_length equ $ - cmus_playlist_path
 
-  testString db "dir closed",0h
-
 section .bss
   path_buffer resb music_dir_length + 1000
   cmus_path_buffer resb cmus_playlist_path_length + 255
