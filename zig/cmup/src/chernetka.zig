@@ -2,23 +2,23 @@ const std = @import("std");
 
 const Tsettb = struct { hello: []const u8 };
 
-fn testa(ptr: *?*Tsettb) void {
-    var smth = Tsettb{
-        .hello = "dfasdfasdfasdf",
-    };
+fn testa(allocator: std.mem.Allocator, ptr: *?*Tsettb) !void {
+    const smth = try allocator.create(Tsettb);
 
-    ptr.* = &smth;
+    smth.* = Tsettb{ .hello = "Hello!" };
+
+    ptr.* = smth;
 }
 
-fn wrapper() ?*Tsettb {
+pub fn main() !void {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+
     var ptr: ?*Tsettb = null;
 
-    testa(&ptr);
+    const allocator = arena.allocator();
 
-    return &ptr;
-}
+    try testa(allocator, &ptr);
 
-pub fn main() void {
-    const t = wrapper();
-    std.debug.print("{}\n", .{t.?.*});
+    std.debug.print("nig {any}\n", .{ptr});
 }

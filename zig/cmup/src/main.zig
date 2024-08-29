@@ -12,7 +12,7 @@ const CmupPlaylist = struct {
 
 const CmupReadPlaylist = struct {
     items: [][]const u8,
-    sub_playlist: ?CmupPlaylist = null,
+    sub_playlist: ?*CmupPlaylist = null,
 };
 
 const cmup_used_music_extensions: []const []const u8 = &[_][]const u8{
