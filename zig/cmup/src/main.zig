@@ -147,23 +147,23 @@ pub fn cmup(allocator: std.mem.Allocator, write: ?bool) anyerror!std.ArrayList(C
     return result;
 }
 
-pub fn printCmupPlaylist(playlist: CmupPlaylist) !void {
+pub fn printCmupPlaylist(playlist: CmupPlaylist, comptime spacing: []const u8) !void {
     const writer = std.io.getStdOut().writer();
 
-    try writer.print("Playlist {s} on path {s} with musics amount {}\n", .{ playlist.name, playlist.path, playlist.content.len });
+    try writer.print("Playlist" ++ green ++ " {s} " ++ reset ++ "on path {s} with musics amount {}\n", .{ playlist.name, playlist.path, playlist.content.len });
 
     for (playlist.content) |value| {
-        try writer.print("  {s}\n", .{value});
+        try writer.print(spacing ++ "  {s}\n", .{value});
     }
 
     for (playlist.sub_playlists) |sub_playlist| {
-        try printCmupPlaylist(sub_playlist.*);
+        try printCmupPlaylist(sub_playlist.*, "  ");
     }
 }
 
-pub fn printCmupPlaylists(playlists: []const CmupPlaylist) !void {
+pub fn printCmupPlaylists(playlists: []const CmupPlaylist, comptime spacing: []const u8) !void {
     for (playlists) |item| {
-        try printCmupPlaylist(item);
+        try printCmupPlaylist(item, spacing);
     }
 }
 
@@ -187,5 +187,5 @@ pub fn main() !void {
     const result = try cmup(allocator, hasArg(args, "--write"));
     defer result.deinit();
 
-    try printCmupPlaylists(result.items);
+    try printCmupPlaylists(result.items, "");
 }
