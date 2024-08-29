@@ -75,11 +75,9 @@ pub fn createCmusSubPlaylist(allocator: std.mem.Allocator, ptrs: *std.ArrayList(
     try ptrs.append(playlist);
 }
 
-pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8, name: []const u8) anyerror!CmupReadPlaylist {
+pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8) anyerror!CmupReadPlaylist {
     var dir = try std.fs.openDirAbsolute(path, .{ .iterate = true });
     var iterator = dir.iterate();
-
-    _ = name;
 
     var ptrs = std.ArrayList(*CmupPlaylist).init(allocator);
 
@@ -101,7 +99,7 @@ pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8, name: []
 
 pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: []const u8, cmus_parent_path: ?[]const u8) anyerror!CmupPlaylist {
     const path = try std.fs.path.join(allocator, &.{ cmus_parent_path orelse cmus_path, entry });
-    const content = try readCmupPlaylist(allocator, path, entry);
+    const content = try readCmupPlaylist(allocator, path);
 
     return CmupPlaylist{
         .name = entry,
