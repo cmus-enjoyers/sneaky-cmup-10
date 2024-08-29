@@ -3,9 +3,27 @@ const std = @import("std");
 const cmus_path = "/home/vktrenokh/music";
 const cmus_playlist_path = "/home/vktrenokh/.config/cmus/playlists";
 
-const CmupPlaylist = struct { name: []const u8, content: [][]const u8, path: []const u8, sub_playlist: ?*const CmupPlaylist = null };
+const CmupPlaylist = struct {
+    name: []const u8,
+    content: [][]const u8,
+    path: []const u8,
+    sub_playlists: []*CmupPlaylist,
+};
 
-const cmup_used_music_extensions: []const []const u8 = &[_][]const u8{ "flac", "mp3", "opus" };
+const CmupReadPlaylist = struct {
+    items: [][]const u8,
+    sub_playlists: []*CmupPlaylist,
+};
+
+const cmup_used_music_extensions: []const []const u8 = &[_][]const u8{
+    "flac",
+    "mp3",
+    "opus",
+};
+
+const reset = "\x1b[0m";
+const green = "\x1b[32m";
+const red = "\x1b[31m";
 
 pub fn isMusic(file_name: []const u8) bool {
     for (cmup_used_music_extensions) |ext| {
@@ -29,7 +47,10 @@ pub fn getDirEntryNames(allocator: std.mem.Allocator, path: []const u8) anyerror
     var result = std.ArrayList([]const u8).init(allocator);
 
     while (try iterator.next()) |value| {
-        try result.append(try allocator.dupe(u8, value.name));
+        switch (value.kind) {
+            .directory => try result.append(try allocator.dupe(u8, value.name)),
+            else => try printUnsuportedEntryError(value.name),
+        }
     }
 
     return result;
@@ -40,41 +61,54 @@ pub fn addMusicToPlaylist(allocator: std.mem.Allocator, path: []const u8, result
         try result.append(try std.fs.path.join(allocator, &.{ path, entry.name }));
     }
 }
-
-pub fn createCmusSubPlaylist(parent_path: []const u8, name: []const u8) !void {
-    _ = parent_path;
-    _ = name;
-}
-
 pub fn printUnsuportedEntryError(name: []const u8) !void {
     const writer = std.io.getStdErr().writer();
 
-    try writer.print("Unknown entry format at {}\n", .{name});
+    try writer.print(red ++ "CmupErr" ++ reset ++ ": Unknown entry format at {s}\n", .{name});
 }
 
-pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8) anyerror![][]const u8 {
+pub fn createCmusSubPlaylist(allocator: std.mem.Allocator, ptrs: *std.ArrayList(*CmupPlaylist), parent_path: []const u8, name: []const u8) anyerror!void {
+    const playlist = try allocator.create(CmupPlaylist);
+
+    playlist.* = try createCmupPlaylist(allocator, try allocator.dupe(u8, name), parent_path);
+
+    try ptrs.append(playlist);
+}
+
+pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8, name: []const u8) anyerror!CmupReadPlaylist {
     var dir = try std.fs.openDirAbsolute(path, .{ .iterate = true });
     var iterator = dir.iterate();
+
+    _ = name;
+
+    var ptrs = std.ArrayList(*CmupPlaylist).init(allocator);
 
     var result = std.ArrayList([]const u8).init(allocator);
 
     while (try iterator.next()) |item| {
         switch (item.kind) {
             .file => try addMusicToPlaylist(allocator, path, &result, item),
-            // TODO: do something with subplaylist
-            .directory => try createCmusSubPlaylist(path, item.name),
-            else => {},
+            .directory => try createCmusSubPlaylist(allocator, &ptrs, path, item.name),
+            else => try printUnsuportedEntryError(item.name),
         }
     }
 
-    return result.items;
+    return CmupReadPlaylist{
+        .items = result.items,
+        .sub_playlists = ptrs.items,
+    };
 }
 
-pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: []const u8) anyerror!CmupPlaylist {
-    const path = try std.fs.path.join(allocator, &.{ cmus_path, entry });
-    const content = try readCmupPlaylist(allocator, path);
+pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: []const u8, cmus_parent_path: ?[]const u8) anyerror!CmupPlaylist {
+    const path = try std.fs.path.join(allocator, &.{ cmus_parent_path orelse cmus_path, entry });
+    const content = try readCmupPlaylist(allocator, path, entry);
 
-    return CmupPlaylist{ .name = entry, .path = path, .content = content };
+    return CmupPlaylist{
+        .name = entry,
+        .path = path,
+        .content = content.items,
+        .sub_playlists = content.sub_playlists,
+    };
 }
 
 pub fn writeCmupPlaylist(playlist: CmupPlaylist) !void {
@@ -91,7 +125,9 @@ pub fn writeCmupPlaylist(playlist: CmupPlaylist) !void {
         try file.writeAll(newline);
     }
 
-    std.debug.print("wrote {s}\n", .{playlist.name});
+    for (playlist.sub_playlists) |sub_playlist| {
+        try writeCmupPlaylist(sub_playlist.*);
+    }
 }
 
 pub fn cmup(allocator: std.mem.Allocator, write: ?bool) anyerror!std.ArrayList(CmupPlaylist) {
@@ -104,7 +140,7 @@ pub fn cmup(allocator: std.mem.Allocator, write: ?bool) anyerror!std.ArrayList(C
             continue;
         }
 
-        const playlist = try createCmupPlaylist(allocator, value);
+        const playlist = try createCmupPlaylist(allocator, value, null);
         try result.append(playlist);
 
         if (write orelse false) {
@@ -115,23 +151,27 @@ pub fn cmup(allocator: std.mem.Allocator, write: ?bool) anyerror!std.ArrayList(C
     return result;
 }
 
-pub fn printCmupPlaylist(playlist: CmupPlaylist) !void {
+pub fn printCmupPlaylist(playlist: CmupPlaylist, comptime spacing: []const u8) !void {
     const writer = std.io.getStdOut().writer();
 
-    try writer.print("Playlist {s} on path {s} with musics amount {}\n", .{ playlist.name, playlist.path, playlist.content.len });
+    try writer.print("Playlist" ++ green ++ " {s} " ++ reset ++ "on path {s} with musics amount {}\n", .{ playlist.name, playlist.path, playlist.content.len });
 
     for (playlist.content) |value| {
-        try writer.print("  {s}\n", .{value});
+        try writer.print(spacing ++ "  {s}\n", .{value});
+    }
+
+    for (playlist.sub_playlists) |sub_playlist| {
+        try printCmupPlaylist(sub_playlist.*, "  ");
     }
 }
 
-pub fn printCmupPlaylists(playlists: []const CmupPlaylist) !void {
+pub fn printCmupPlaylists(playlists: []const CmupPlaylist, comptime spacing: []const u8) !void {
     for (playlists) |item| {
-        try printCmupPlaylist(item);
+        try printCmupPlaylist(item, spacing);
     }
 }
 
-pub fn hasArg(args: [][]u8, arg_name: []const u8) bool {
+pub fn hasArg(args: [][]u8, comptime arg_name: []const u8) bool {
     for (args) |arg| {
         if (std.mem.eql(u8, arg, arg_name)) {
             return true;
@@ -152,6 +192,6 @@ pub fn main() !void {
     defer result.deinit();
 
     if (!hasArg(args, "--quiet")) {
-        try printCmupPlaylists(result.items);
+        try printCmupPlaylists(result.items, "");
     }
 }
