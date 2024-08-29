@@ -67,26 +67,28 @@ pub fn printUnsuportedEntryError(name: []const u8) !void {
     try writer.print(red ++ "CmupErr" ++ reset ++ ": Unknown entry format at {s}\n", .{name});
 }
 
-pub fn createCmusSubPlaylist(allocator: std.mem.Allocator, parent_name: []const u8, name: []const u8) anyerror!CmupPlaylist {
+pub fn createCmusSubPlaylist(allocator: std.mem.Allocator, ptr: *?*CmupPlaylist, parent_name: []const u8, name: []const u8) anyerror!void {
     const path = try std.fs.path.join(allocator, &.{ parent_name, name });
 
-    return try createCmupPlaylist(allocator, path);
+    const playlist = try allocator.create(CmupPlaylist);
+
+    playlist.* = try createCmupPlaylist(allocator, path);
+
+    ptr.* = playlist;
 }
 
 pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8, name: []const u8) anyerror!CmupReadPlaylist {
     var dir = try std.fs.openDirAbsolute(path, .{ .iterate = true });
     var iterator = dir.iterate();
 
-    var ptr: ?CmupPlaylist = null;
+    var ptr: ?*CmupPlaylist = null;
 
     var result = std.ArrayList([]const u8).init(allocator);
 
     while (try iterator.next()) |item| {
         switch (item.kind) {
             .file => try addMusicToPlaylist(allocator, path, &result, item),
-            .directory => {
-                ptr = try createCmusSubPlaylist(allocator, name, item.name);
-            },
+            .directory => try createCmusSubPlaylist(allocator, &ptr, name, item.name),
             else => try printUnsuportedEntryError(item.name),
         }
     }
@@ -100,15 +102,13 @@ pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8, name: []
 pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: []const u8) anyerror!CmupPlaylist {
     const path = try std.fs.path.join(allocator, &.{ cmus_path, entry });
     const content = try readCmupPlaylist(allocator, path, entry);
-    const ptr = try allocator.create(CmupPlaylist);
 
     if (content.sub_playlist) |unwrapped| {
-        ptr.* = unwrapped;
         return CmupPlaylist{
             .name = entry,
             .path = path,
             .content = content.items,
-            .sub_playlist = ptr,
+            .sub_playlist = unwrapped,
         };
     }
 
