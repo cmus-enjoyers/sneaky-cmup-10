@@ -169,6 +169,12 @@ pub fn printCmupPlaylists(playlists: []const CmupPlaylist, comptime spacing: []c
     }
 }
 
+pub fn printSuccess() !void {
+    const writer = std.io.getStdOut().writer();
+
+    try writer.writeAll("Updated playlists :)\n");
+}
+
 pub fn hasArg(args: [][]u8, comptime arg_name: []const u8) bool {
     for (args) |arg| {
         if (std.mem.eql(u8, arg, arg_name)) {
@@ -189,7 +195,9 @@ pub fn main() !void {
     const result = try cmup(allocator, hasArg(args, "--write"));
     defer result.deinit();
 
-    if (!hasArg(args, "--quiet")) {
+    if (hasArg(args, "--print-every-thing")) {
         try printCmupPlaylists(result.items, "");
     }
+
+    try printSuccess();
 }
