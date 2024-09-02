@@ -71,23 +71,15 @@ pub fn endsWithDollar(string: []const u8) bool {
     return std.ascii.endsWithIgnoreCase(string, "$");
 }
 
-pub fn createCmusSubPlaylist(allocator: std.mem.Allocator, ptrs: *std.ArrayList(*CmupPlaylist), parent_path: []const u8, name: []const u8, parent_name: []const u8) anyerror!void {
+pub fn createCmusSubPlaylist(allocator: std.mem.Allocator, ptrs: *std.ArrayList(*CmupPlaylist), parent_path: []const u8, name: []const u8) anyerror!void {
     const playlist = try allocator.create(CmupPlaylist);
-
-    std.debug.print("dafsdf {s}\n", .{name});
-
-    if (endsWithDollar(name)) {
-        std.debug.print("Ends with slikedollar", .{});
-        const new_name = try std.mem.join(allocator, "-", &.{name});
-        playlist.* = try createCmupPlaylist(allocator, new_name, parent_name);
-    }
 
     playlist.* = try createCmupPlaylist(allocator, try allocator.dupe(u8, name), parent_path);
 
     try ptrs.append(playlist);
 }
 
-pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8, name: []const u8) anyerror!CmupReadPlaylist {
+pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8) anyerror!CmupReadPlaylist {
     var dir = try std.fs.openDirAbsolute(path, .{ .iterate = true });
     var iterator = dir.iterate();
 
@@ -98,7 +90,7 @@ pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8, name: []
     while (try iterator.next()) |item| {
         switch (item.kind) {
             .file => try addMusicToPlaylist(allocator, path, &result, item),
-            .directory => try createCmusSubPlaylist(allocator, &ptrs, path, item.name, name),
+            .directory => try createCmusSubPlaylist(allocator, &ptrs, path, item.name),
             else => try printUnsuportedEntryError(item.name),
         }
     }
@@ -109,12 +101,25 @@ pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8, name: []
     };
 }
 
+pub fn removeLast(string: []const u8) []const u8 {
+    return string[0 .. string.len - 1];
+}
+
+pub fn expandDollar(allocator: std.mem.Allocator, path: []const u8, entry: []const u8) anyerror![]const u8 {
+    return try std.mem.join(allocator, "-", &[_][]const u8{ std.fs.path.basename(path), entry });
+}
+
 pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: []const u8, cmus_parent_path: ?[]const u8) anyerror!CmupPlaylist {
-    const path = try std.fs.path.join(allocator, &.{ cmus_parent_path orelse cmus_path, entry });
-    const content = try readCmupPlaylist(allocator, path, entry);
+    const is_dollared = endsWithDollar(entry);
+
+    const true_entry = if (is_dollared) removeLast(entry) else entry;
+    const true_name = if (is_dollared) try expandDollar(allocator, cmus_parent_path orelse cmus_path, true_entry) else entry;
+
+    const path = try std.fs.path.join(allocator, &.{ cmus_parent_path orelse cmus_path, true_entry });
+    const content = try readCmupPlaylist(allocator, path);
 
     return CmupPlaylist{
-        .name = entry,
+        .name = true_name,
         .path = path,
         .content = content.items,
         .sub_playlists = content.sub_playlists,
@@ -207,11 +212,7 @@ pub fn main() !void {
     const result = try cmup(allocator, hasArg(args, "--write"));
     defer result.deinit();
 
-<<<<<<< Updated upstream
-    if (hasArg(args, "--print-every-thing")) {
-=======
     if (hasArg(args, "--print-everything")) {
->>>>>>> Stashed changes
         try printCmupPlaylists(result.items, "");
     }
 
