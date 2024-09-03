@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const cmus_path = "/home/vktrenokh/music";
+const cmus_path = "/home/vktrenokh/Music";
 const cmus_playlist_path = "/home/vktrenokh/.config/cmus/playlists";
 
 const CmupPlaylist = struct {
@@ -67,6 +67,10 @@ pub fn printUnsuportedEntryError(name: []const u8) !void {
     try writer.print(red ++ "CmupErr" ++ reset ++ ": Unknown entry format at {s}\n", .{name});
 }
 
+pub fn endsWithDollar(string: []const u8) bool {
+    return std.ascii.endsWithIgnoreCase(string, "$");
+}
+
 pub fn createCmusSubPlaylist(allocator: std.mem.Allocator, ptrs: *std.ArrayList(*CmupPlaylist), parent_path: []const u8, name: []const u8) anyerror!void {
     const playlist = try allocator.create(CmupPlaylist);
 
@@ -97,12 +101,24 @@ pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8) anyerror
     };
 }
 
+pub fn removeLast(string: []const u8) []const u8 {
+    return string[0 .. string.len - 1];
+}
+
+pub fn expandDollar(allocator: std.mem.Allocator, path: []const u8, entry: []const u8) anyerror![]const u8 {
+    return try std.mem.join(allocator, "-", &[_][]const u8{ std.fs.path.basename(path), entry });
+}
+
 pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: []const u8, cmus_parent_path: ?[]const u8) anyerror!CmupPlaylist {
+    const is_dollared = endsWithDollar(entry);
+
+    const true_name = if (is_dollared) try expandDollar(allocator, cmus_parent_path orelse cmus_path, removeLast(entry)) else entry;
+
     const path = try std.fs.path.join(allocator, &.{ cmus_parent_path orelse cmus_path, entry });
     const content = try readCmupPlaylist(allocator, path);
 
     return CmupPlaylist{
-        .name = entry,
+        .name = true_name,
         .path = path,
         .content = content.items,
         .sub_playlists = content.sub_playlists,
@@ -169,6 +185,12 @@ pub fn printCmupPlaylists(playlists: []const CmupPlaylist, comptime spacing: []c
     }
 }
 
+pub fn printSuccess() !void {
+    const writer = std.io.getStdOut().writer();
+
+    try writer.writeAll("Updated playlists :)\n");
+}
+
 pub fn hasArg(args: [][]u8, comptime arg_name: []const u8) bool {
     for (args) |arg| {
         if (std.mem.eql(u8, arg, arg_name)) {
@@ -189,7 +211,9 @@ pub fn main() !void {
     const result = try cmup(allocator, hasArg(args, "--write"));
     defer result.deinit();
 
-    if (!hasArg(args, "--quiet")) {
+    if (hasArg(args, "--print-everything")) {
         try printCmupPlaylists(result.items, "");
     }
+
+    try printSuccess();
 }
