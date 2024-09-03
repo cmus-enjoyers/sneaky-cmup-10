@@ -112,10 +112,9 @@ pub fn expandDollar(allocator: std.mem.Allocator, path: []const u8, entry: []con
 pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: []const u8, cmus_parent_path: ?[]const u8) anyerror!CmupPlaylist {
     const is_dollared = endsWithDollar(entry);
 
-    const true_entry = if (is_dollared) removeLast(entry) else entry;
-    const true_name = if (is_dollared) try expandDollar(allocator, cmus_parent_path orelse cmus_path, true_entry) else entry;
+    const true_name = if (is_dollared) try expandDollar(allocator, cmus_parent_path orelse cmus_path, removeLast(entry)) else entry;
 
-    const path = try std.fs.path.join(allocator, &.{ cmus_parent_path orelse cmus_path, true_entry });
+    const path = try std.fs.path.join(allocator, &.{ cmus_parent_path orelse cmus_path, entry });
     const content = try readCmupPlaylist(allocator, path);
 
     return CmupPlaylist{
