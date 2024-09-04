@@ -191,6 +191,12 @@ pub fn printSuccess() !void {
     try writer.writeAll("Updated playlists :)\n");
 }
 
+pub fn printInfo() !void {
+    const writer = std.io.getStdOut().writer();
+
+    try writer.writeAll("If you wish to write playlists into your cmus config playlists\ntry adding --write flag");
+}
+
 pub fn hasArg(args: [][]u8, comptime arg_name: []const u8) bool {
     for (args) |arg| {
         if (std.mem.eql(u8, arg, arg_name)) {
@@ -207,13 +213,18 @@ pub fn main() !void {
     const allocator = arena.allocator();
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
+    const has_write = hasArg(args, "--write");
 
-    const result = try cmup(allocator, hasArg(args, "--write"));
+    const result = try cmup(allocator, has_write);
     defer result.deinit();
 
     if (hasArg(args, "--print-everything")) {
         try printCmupPlaylists(result.items, "");
     }
 
-    try printSuccess();
+    if (has_write) {
+        try printSuccess();
+    } else {
+        try printInfo();
+    }
 }
