@@ -1,8 +1,5 @@
 const std = @import("std");
 
-// const cmus_path = "/home/vktrenokh/Music";
-// const cmus_playlist_path = "/home/vktrenokh/.config/cmus/playlists";
-
 const CmupPlaylist = struct {
     name: []const u8,
     content: [][]const u8,
@@ -92,7 +89,7 @@ pub fn readCmupPlaylist(allocator: std.mem.Allocator, path: []const u8, cmus_pat
     while (try iterator.next()) |item| {
         switch (item.kind) {
             .file => try addMusicToPlaylist(allocator, path, &result, item),
-            .directory => try createCmusSubPlaylist(allocator, &ptrs, path, item.name, cmus_path),
+            .directory => try createCmusSubPlaylist(allocator, &ptrs, cmus_path, path, item.name),
             else => try printUnsuportedEntryError(item.name),
         }
     }
