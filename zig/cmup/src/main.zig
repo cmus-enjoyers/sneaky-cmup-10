@@ -68,13 +68,19 @@ pub fn endsWithDollar(string: []const u8) bool {
     return std.ascii.endsWithIgnoreCase(string, "$");
 }
 
-pub fn createCmusSubPlaylist(allocator: std.mem.Allocator, ptrs: *std.ArrayList(*CmupPlaylist), cmus_path: []const u8, parent_path: []const u8, name: []const u8,) anyerror!void {
+pub fn createCmusSubPlaylist(
+    allocator: std.mem.Allocator,
+    ptrs: *std.ArrayList(*CmupPlaylist),
+    cmus_path: []const u8,
+    parent_path: []const u8,
+    name: []const u8,
+) anyerror!void {
     const playlist = try allocator.create(CmupPlaylist);
 
     playlist.* = try createCmupPlaylist(allocator, try allocator.dupe(u8, name), cmus_path, parent_path);
 
     if (playlist.content.len > 0) {
-      try ptrs.append(playlist);
+        try ptrs.append(playlist);
     }
 }
 
@@ -112,7 +118,7 @@ pub fn createCmupPlaylist(allocator: std.mem.Allocator, entry: []const u8, cmus_
     const is_dollared = endsWithDollar(entry);
 
     const true_name = if (is_dollared) try expandDollar(allocator, cmus_parent_path orelse cmus_path, removeLast(entry)) else entry;
-    
+
     const path = try std.fs.path.join(allocator, &.{ cmus_parent_path orelse cmus_path, entry });
 
     const content = try readCmupPlaylist(allocator, path, cmus_path);
@@ -129,12 +135,12 @@ pub fn writeCmupPlaylist(playlist: CmupPlaylist, path: []const u8) !void {
     if (playlist.content.len > 0) {
         var dir = try std.fs.openDirAbsolute(path, .{});
         defer dir.close();
-        
+
         var file = try dir.createFile(playlist.name, .{});
         defer file.close();
-        
+
         const newline = comptime "\n";
-        
+
         for (playlist.content) |music| {
             try file.writeAll(music);
             try file.writeAll(newline);
@@ -149,7 +155,12 @@ pub fn writeCmupPlaylist(playlist: CmupPlaylist, path: []const u8) !void {
 }
 
 pub fn cmup(allocator: std.mem.Allocator, write: ?bool, music_path: []const u8, playlist_path: []const u8) anyerror!std.ArrayList(CmupPlaylist) {
-    const playlists = try getDirEntryNames(allocator, music_path);
+    const playlists = getDirEntryNames(allocator, music_path) catch blk: {
+        break :blk try getDirEntryNames(allocator, try std.fs.path.join(allocator, &.{
+            std.fs.path.dirname(music_path).?,
+            "music",
+        }));
+    };
 
     var result = std.ArrayList(CmupPlaylist).init(allocator);
 
@@ -161,7 +172,7 @@ pub fn cmup(allocator: std.mem.Allocator, write: ?bool, music_path: []const u8, 
         const playlist = try createCmupPlaylist(allocator, value, music_path, null);
 
         if (write orelse false) {
-           try writeCmupPlaylist(playlist, playlist_path);
+            try writeCmupPlaylist(playlist, playlist_path);
         }
 
         try result.append(playlist);
@@ -225,8 +236,8 @@ pub fn main() !void {
     const home = std.posix.getenv("HOME");
 
     if (home) |value| {
-        const cmus_playlist_path = try std.fs.path.join(allocator, &[_][]const u8{value, ".config/cmus/playlists" });
-        const cmus_music_path = try std.fs.path.join(allocator, &.{value, "Music"});
+        const cmus_playlist_path = try std.fs.path.join(allocator, &[_][]const u8{ value, ".config/cmus/playlists" });
+        const cmus_music_path = try std.fs.path.join(allocator, &.{ value, "Music" });
 
         const result = try cmup(allocator, has_write, cmus_music_path, cmus_playlist_path);
         defer result.deinit();
@@ -244,4 +255,3 @@ pub fn main() !void {
         return error.NoHome;
     }
 }
-
