@@ -10,5 +10,6 @@
 
 ```bash
 cd zig/cmup
+
 zig build -Doptimize=ReleaseFast install --prefix ~/.local/
 ```
