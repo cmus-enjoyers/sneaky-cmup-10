@@ -32,7 +32,7 @@ pub const Token = struct {
 
     pub fn print(self: Token) void {
         std.debug.print(
-            colors.green ++ "{s}" ++ colors.reset ++ ": {s}; ",
+            colors.green_text("{s}") ++ colors.dim_text(":") ++ " {s}; ",
             .{ @tagName(self.type), self.lexeme },
         );
     }
@@ -95,4 +95,6 @@ pub fn main() !void {
     for (lexer.tokens.items) |token| {
         token.print();
     }
+
+    std.debug.print("\n\n\n{any}", .{lexer.tokens.items});
 }
