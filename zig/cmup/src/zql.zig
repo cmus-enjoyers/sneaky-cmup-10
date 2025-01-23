@@ -66,8 +66,13 @@ const Lexer = struct {
 
     pub fn jepa(lexer: *Lexer, isString: bool) bool {
         if (isString) {
-            std.debug.print("'{s}' xxxxxb\n", .{lexer.input[lexer.position - 1 .. lexer.position]});
-            return lexer.input[lexer.position] == '\'';
+            if (lexer.input[lexer.position] == '\'') {
+                lexer.position += 1;
+
+                return false;
+            }
+
+            return true;
         }
 
         return !std.ascii.isWhitespace(lexer.input[lexer.position]);
@@ -84,7 +89,13 @@ const Lexer = struct {
 
         const start = lexer.position;
 
+        // TODO: refactor this later
+
         const isString = lexer.input[start] == '\'';
+
+        if (isString) {
+            lexer.position += 1;
+        }
 
         while (lexer.jepa(isString)) {
             lexer.position += 1;
