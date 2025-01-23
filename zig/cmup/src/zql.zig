@@ -23,6 +23,7 @@ const colors = @import("colors.zig");
 pub const TokenType = enum {
     Require,
     Indentifier,
+    String,
     EOL,
 };
 
@@ -56,10 +57,18 @@ const Lexer = struct {
             return TokenType.Require;
         }
 
+        if (lexeme[0] == '\'' and lexeme[lexeme.len - 1] == '\'') {
+            return TokenType.String;
+        }
+
         return TokenType.Indentifier;
     }
 
-    pub fn nextToken(lexer: *Lexer) !Token {
+    pub fn nextToken(lexer: *Lexer) !?Token {
+        if (lexer.position == lexer.input.len - 1) {
+            return null;
+        }
+
         while (std.ascii.isWhitespace(lexer.input[lexer.position])) {
             lexer.position += 1;
         }
@@ -91,6 +100,10 @@ pub fn main() !void {
 
     _ = try lexer.nextToken();
     _ = try lexer.nextToken();
+
+    while (try lexer.nextToken()) |val| {
+        _ = val;
+    }
 
     for (lexer.tokens.items) |token| {
         token.print();
