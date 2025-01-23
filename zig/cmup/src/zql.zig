@@ -18,6 +18,7 @@
 // The single quote character (') within a string can be escaped using the backslash (\) character.
 
 const std = @import("std");
+const colors = @import("colors.zig");
 
 pub const TokenType = enum {
     Require,
@@ -30,7 +31,10 @@ pub const Token = struct {
     lexeme: []const u8,
 
     pub fn print(self: Token) void {
-        std.debug.print("{s}", .{@tagName(self.type)});
+        std.debug.print(
+            colors.green ++ "{s}" ++ colors.reset ++ ": {s}; ",
+            .{ @tagName(self.type), self.lexeme },
+        );
     }
 };
 
@@ -47,13 +51,29 @@ const Lexer = struct {
         };
     }
 
-    pub fn nextToken(lexer: *Lexer) !Token {
-        const token = Token{
-            .type = .Require,
-            .lexeme = "require",
-        };
+    pub fn getTokenType(lexeme: []const u8) TokenType {
+        if (std.mem.eql(u8, lexeme, "require")) {
+            return TokenType.Require;
+        }
 
-        lexer.position += 1;
+        return TokenType.Indentifier;
+    }
+
+    pub fn nextToken(lexer: *Lexer) !Token {
+        while (std.ascii.isWhitespace(lexer.input[lexer.position])) {
+            lexer.position += 1;
+        }
+
+        const start = lexer.position;
+
+        while (!std.ascii.isWhitespace(lexer.input[lexer.position])) {
+            lexer.position += 1;
+        }
+
+        const token = Token{
+            .type = Lexer.getTokenType(lexer.input[start..lexer.position]),
+            .lexeme = lexer.input[start..lexer.position],
+        };
 
         try lexer.tokens.append(token);
 
@@ -67,8 +87,9 @@ pub fn main() !void {
 
     const allocator = arena.allocator();
 
-    var lexer = Lexer.init("", allocator);
+    var lexer = Lexer.init(@embedFile("./test.zql"), allocator);
 
+    _ = try lexer.nextToken();
     _ = try lexer.nextToken();
 
     for (lexer.tokens.items) |token| {
