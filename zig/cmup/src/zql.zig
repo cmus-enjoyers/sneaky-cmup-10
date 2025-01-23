@@ -22,7 +22,7 @@ const colors = @import("colors.zig");
 
 pub const TokenType = enum {
     Require,
-    Indentifier,
+    Identifier,
     String,
     EOL,
 };
@@ -61,7 +61,16 @@ const Lexer = struct {
             return TokenType.String;
         }
 
-        return TokenType.Indentifier;
+        return TokenType.Identifier;
+    }
+
+    pub fn jepa(lexer: *Lexer, isString: bool) bool {
+        if (isString) {
+            std.debug.print("'{s}' xxxxxb\n", .{lexer.input[lexer.position - 1 .. lexer.position]});
+            return lexer.input[lexer.position] == '\'';
+        }
+
+        return !std.ascii.isWhitespace(lexer.input[lexer.position]);
     }
 
     pub fn nextToken(lexer: *Lexer) !?Token {
@@ -75,13 +84,17 @@ const Lexer = struct {
 
         const start = lexer.position;
 
-        while (!std.ascii.isWhitespace(lexer.input[lexer.position])) {
+        const isString = lexer.input[start] == '\'';
+
+        while (lexer.jepa(isString)) {
             lexer.position += 1;
         }
 
+        const lexeme = lexer.input[start..lexer.position];
+
         const token = Token{
-            .type = Lexer.getTokenType(lexer.input[start..lexer.position]),
-            .lexeme = lexer.input[start..lexer.position],
+            .type = if (isString) TokenType.String else Lexer.getTokenType(lexeme),
+            .lexeme = lexeme,
         };
 
         try lexer.tokens.append(token);
