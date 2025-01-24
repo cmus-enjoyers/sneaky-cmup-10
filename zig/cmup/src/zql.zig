@@ -43,13 +43,10 @@ const Lexer = struct {
     input: []const u8,
     position: usize,
     tokens: std.ArrayList(Token),
+    allocator: std.mem.Allocator,
 
     pub fn init(input: []const u8, allocator: std.mem.Allocator) Lexer {
-        return Lexer{
-            .input = input,
-            .position = 0,
-            .tokens = std.ArrayList(Token).init(allocator),
-        };
+        return Lexer{ .input = input, .position = 0, .tokens = std.ArrayList(Token).init(allocator), .allocator = allocator };
     }
 
     pub inline fn getCurrentSymbol(lexer: *Lexer) u8 {
@@ -59,10 +56,6 @@ const Lexer = struct {
     pub fn getTokenType(lexeme: []const u8) TokenType {
         if (std.mem.eql(u8, lexeme, "require")) {
             return TokenType.Require;
-        }
-
-        if (lexeme[0] == '\'' and lexeme[lexeme.len - 1] == '\'') {
-            return TokenType.String;
         }
 
         return TokenType.Identifier;
@@ -99,7 +92,23 @@ const Lexer = struct {
             lexer.position += 1;
         }
 
+        const stderr = std.io.getStdErr();
+
         while (lexer.shouldConsume(isString)) {
+            if (isString) {
+                if (lexer.position == lexer.input.len - 1) {
+                    const message = try std.fmt.allocPrint(
+                        lexer.allocator,
+                        colors.red_text("Error") ++ colors.dim_text(" => ") ++ "Unterminated string at {}",
+                        .{lexer.position},
+                    );
+
+                    try stderr.writeAll(message);
+
+                    return error.UnterminatedString;
+                }
+            }
+
             lexer.position += 1;
         }
 
@@ -124,10 +133,7 @@ pub fn main() !void {
 
     var lexer = Lexer.init(@embedFile("./test.zql"), allocator);
 
-    _ = try lexer.nextToken();
-    _ = try lexer.nextToken();
-
-    while (try lexer.nextToken()) |val| {
+    while (lexer.nextToken() catch return) |val| {
         _ = val;
     }
 
