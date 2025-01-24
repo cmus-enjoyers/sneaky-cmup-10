@@ -32,15 +32,18 @@ pub const Token = struct {
     lexeme: []const u8,
 
     pub fn print(self: Token) void {
+        const token_type_fmt = comptime colors.green_text("{s}");
+        const token_type = @tagName(self.type);
+
         if (self.lexeme.len > 0) {
             std.debug.print(
-                colors.green_text("{s}") ++ colors.dim_text(":") ++ " {s}; ",
-                .{ @tagName(self.type), self.lexeme },
+                token_type_fmt ++ colors.dim_text(":") ++ " {s}; ",
+                .{ token_type, self.lexeme },
             );
         } else {
             std.debug.print(
-                colors.green_text("{s}") ++ ";",
-                .{@tagName(self.type)},
+                token_type_fmt ++ ";",
+                .{token_type},
             );
         }
     }
@@ -53,7 +56,12 @@ const Lexer = struct {
     allocator: std.mem.Allocator,
 
     pub fn init(input: []const u8, allocator: std.mem.Allocator) Lexer {
-        return Lexer{ .input = input, .position = 0, .tokens = std.ArrayList(Token).init(allocator), .allocator = allocator };
+        return Lexer{
+            .input = input,
+            .position = 0,
+            .tokens = std.ArrayList(Token).init(allocator),
+            .allocator = allocator,
+        };
     }
 
     pub inline fn getCurrentSymbol(lexer: *Lexer) u8 {
@@ -101,16 +109,16 @@ const Lexer = struct {
 
         const start = lexer.position;
 
-        const isString = lexer.input[start] == '\'';
+        const is_string = lexer.input[start] == '\'';
 
-        if (isString) {
+        if (is_string) {
             lexer.position += 1;
         }
 
         const stderr = std.io.getStdErr();
 
-        while (lexer.shouldConsume(isString)) {
-            if (isString) {
+        while (lexer.shouldConsume(is_string)) {
+            if (is_string) {
                 if (lexer.position == lexer.input.len - 1) {
                     const message = try std.fmt.allocPrint(
                         lexer.allocator,
@@ -132,7 +140,7 @@ const Lexer = struct {
         const lexeme = lexer.input[start..lexer.position];
 
         const token = Token{
-            .type = if (isString) TokenType.String else Lexer.getTokenType(lexeme),
+            .type = if (is_string) TokenType.String else Lexer.getTokenType(lexeme),
             .lexeme = lexeme,
         };
 
