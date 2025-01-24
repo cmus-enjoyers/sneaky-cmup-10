@@ -28,7 +28,7 @@ pub fn main() !void {
 
     var lexer = Lexer.init(@embedFile("./test.zql"), allocator);
 
-    while (lexer.nextToken() catch return) |val| {
+    while (lexer.nextToken() catch std.process.exit(1)) |val| {
         if (val.type == .EOL) {
             break;
         }
