@@ -32,10 +32,17 @@ pub const Token = struct {
     lexeme: []const u8,
 
     pub fn print(self: Token) void {
-        std.debug.print(
-            colors.green_text("{s}") ++ colors.dim_text(":") ++ " {s}; ",
-            .{ @tagName(self.type), self.lexeme },
-        );
+        if (self.lexeme.len > 0) {
+            std.debug.print(
+                colors.green_text("{s}") ++ colors.dim_text(":") ++ " {s}; ",
+                .{ @tagName(self.type), self.lexeme },
+            );
+        } else {
+            std.debug.print(
+                colors.green_text("{s}") ++ ";",
+                .{@tagName(self.type)},
+            );
+        }
     }
 };
 
@@ -75,9 +82,17 @@ const Lexer = struct {
         return !std.ascii.isWhitespace(lexer.getCurrentSymbol());
     }
 
+    pub fn addEolToken(lexer: *Lexer) !Token {
+        const token = Token{ .type = .EOL, .lexeme = "" };
+
+        try lexer.tokens.append(token);
+
+        return token;
+    }
+
     pub fn nextToken(lexer: *Lexer) !?Token {
         if (lexer.position == lexer.input.len - 1) {
-            return null;
+            return try lexer.addEolToken();
         }
 
         while (std.ascii.isWhitespace(lexer.getCurrentSymbol())) {
@@ -136,7 +151,9 @@ pub fn main() !void {
     var lexer = Lexer.init(@embedFile("./test.zql"), allocator);
 
     while (lexer.nextToken() catch return) |val| {
-        _ = val;
+        if (val.type == .EOL) {
+            break;
+        }
     }
 
     for (lexer.tokens.items) |token| {
