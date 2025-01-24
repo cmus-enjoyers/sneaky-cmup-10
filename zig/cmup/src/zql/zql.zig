@@ -38,5 +38,5 @@ pub fn main() !void {
         token.print();
     }
 
-    std.debug.print("\n\n\n{}", .{std.json.fmt(lexer.tokens.items, .{ .whitespace = .indent_4 })});
+    std.debug.print("\n\n\n{}", .{std.json.fmt(lexer.tokens.items, .{ .whitespace = .indent_2 })});
 }
