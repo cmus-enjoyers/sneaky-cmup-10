@@ -64,15 +64,15 @@ const Lexer = struct {
         return TokenType.Identifier;
     }
 
-    pub fn jepa(lexer: *Lexer, isString: bool) bool {
+    pub fn shouldConsume(lexer: *Lexer, isString: bool) bool {
         if (isString) {
-            if (lexer.input[lexer.position] == '\'') {
-                lexer.position += 1;
-
-                return false;
+            if (lexer.input[lexer.position] != '\'') {
+                return true;
             }
 
-            return true;
+            lexer.position += 1;
+
+            return false;
         }
 
         return !std.ascii.isWhitespace(lexer.input[lexer.position]);
@@ -97,7 +97,7 @@ const Lexer = struct {
             lexer.position += 1;
         }
 
-        while (lexer.jepa(isString)) {
+        while (lexer.shouldConsume(isString)) {
             lexer.position += 1;
         }
 
