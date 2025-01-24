@@ -1,6 +1,6 @@
 // Example of a ZQL query:
 //
-// require playlists jump-bangers, vktrenokh-stwv
+// require jump-bangers, vktrenokh-stwv
 //
 // add all from jump-bangers and add all from vktrenokh-stwv where name contains 'voj'
 //
@@ -25,6 +25,7 @@ pub const TokenType = enum {
     Identifier,
     String,
     EOL,
+    Add,
 };
 
 pub const Token = struct {
@@ -71,6 +72,10 @@ const Lexer = struct {
     pub fn getTokenType(lexeme: []const u8) TokenType {
         if (std.mem.eql(u8, lexeme, "require")) {
             return TokenType.Require;
+        }
+
+        if (std.mem.eql(u8, lexeme, "add")) {
+            return TokenType.Add;
         }
 
         return TokenType.Identifier;

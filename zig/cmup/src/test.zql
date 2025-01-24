@@ -1,1 +1,3 @@
-require jump-bangers 'dafdsaf      dsfsaf'
+require jump-bangers, vktrenokh-stwv
+
+add all from jump-bangers and add all from vktrenokh-stwv where name contains 'voj'
