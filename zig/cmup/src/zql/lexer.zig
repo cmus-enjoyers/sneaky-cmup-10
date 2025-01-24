@@ -38,6 +38,7 @@ pub const Lexer = struct {
     position: usize,
     tokens: std.ArrayList(Token),
     allocator: std.mem.Allocator,
+    line: usize,
 
     pub fn init(input: []const u8, allocator: std.mem.Allocator) Lexer {
         return Lexer{
@@ -45,6 +46,7 @@ pub const Lexer = struct {
             .position = 0,
             .tokens = std.ArrayList(Token).init(allocator),
             .allocator = allocator,
+            .line = 0,
         };
     }
 
@@ -103,6 +105,10 @@ pub const Lexer = struct {
 
         while (std.ascii.isWhitespace(lexer.getCurrentSymbol())) {
             lexer.position += 1;
+
+            if (lexer.getCurrentSymbol() == '\n' and lexer.position != lexer.input.len - 1) {
+                lexer.line = lexer.position;
+            }
         }
 
         const start = lexer.position;
@@ -118,13 +124,17 @@ pub const Lexer = struct {
         while (lexer.shouldConsume(is_string)) {
             if (is_string) {
                 if (lexer.position == lexer.input.len - 1) {
-                    try err.print(lexer.allocator, stderr, lexer.position, "dsaf");
+                    try err.print(lexer.allocator, stderr, lexer.line, lexer.input[start..lexer.position], lexer.input);
 
                     return error.UnterminatedString;
                 }
             }
 
             lexer.position += 1;
+
+            if (lexer.getCurrentSymbol() == '\n' and lexer.position != lexer.input.len - 1) {
+                lexer.line = lexer.position;
+            }
         }
 
         const lexeme = lexer.input[start..lexer.position];
