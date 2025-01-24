@@ -1,5 +1,6 @@
 const std = @import("std");
 const colors = @import("../utils/colors.zig");
+const err = @import("error.zig");
 
 pub const TokenType = enum {
     Require,
@@ -117,15 +118,7 @@ pub const Lexer = struct {
         while (lexer.shouldConsume(is_string)) {
             if (is_string) {
                 if (lexer.position == lexer.input.len - 1) {
-                    const message = try std.fmt.allocPrint(
-                        lexer.allocator,
-                        colors.red_text("Error") ++ colors.dim_text(" => ") ++ "Unterminated string at {}",
-                        .{lexer.position},
-                    );
-
-                    try stderr.writeAll(message);
-
-                    lexer.allocator.free(message);
+                    try err.print(lexer.allocator, stderr, lexer.position, "dsaf");
 
                     return error.UnterminatedString;
                 }
