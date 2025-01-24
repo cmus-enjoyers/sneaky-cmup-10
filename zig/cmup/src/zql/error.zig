@@ -19,7 +19,7 @@ pub fn print(allocator: std.mem.Allocator, out: std.fs.File, line_position: usiz
 
     const message = try std.fmt.allocPrint(
         allocator,
-        colors.red_text("\nError") ++ colors.dim_text(" => ") ++ "Unterminated string at line {}\n\n" ++ colors.dim_text("{} | ") ++ "{s}",
+        colors.red_text("\nError") ++ colors.dim_text(" => ") ++ "Unterminated string at line {}\n\n" ++ colors.dim_text("{} ▎ ") ++ "{s}\n",
         .{ line, line, msg },
     );
     defer allocator.free(message);
