@@ -105,6 +105,8 @@ const Lexer = struct {
 
                     try stderr.writeAll(message);
 
+                    lexer.allocator.free(message);
+
                     return error.UnterminatedString;
                 }
             }
