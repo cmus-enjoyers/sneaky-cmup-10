@@ -26,6 +26,7 @@ pub const TokenType = enum {
     String,
     EOL,
     Add,
+    Unknown, // remove in future
 };
 
 pub const Token = struct {
@@ -69,7 +70,11 @@ const Lexer = struct {
         return lexer.input[lexer.position];
     }
 
-    pub fn getTokenType(lexeme: []const u8) TokenType {
+    pub fn getLastToken(lexer: Lexer) ?Token {
+        return lexer.tokens.items[lexer.tokens.items.len - 1];
+    }
+
+    pub fn getTokenType(lexer: Lexer, lexeme: []const u8) TokenType {
         if (std.mem.eql(u8, lexeme, "require")) {
             return TokenType.Require;
         }
@@ -78,7 +83,13 @@ const Lexer = struct {
             return TokenType.Add;
         }
 
-        return TokenType.Identifier;
+        if (lexer.getLastToken()) |token| {
+            if (token.type == .Require or token.type == .Add) {
+                return TokenType.Identifier;
+            }
+        }
+
+        return TokenType.Unknown;
     }
 
     pub fn shouldConsume(lexer: *Lexer, isString: bool) bool {
@@ -145,7 +156,7 @@ const Lexer = struct {
         const lexeme = lexer.input[start..lexer.position];
 
         const token = Token{
-            .type = if (is_string) TokenType.String else Lexer.getTokenType(lexeme),
+            .type = if (is_string) TokenType.String else lexer.getTokenType(lexeme),
             .lexeme = lexeme,
         };
 
@@ -173,5 +184,5 @@ pub fn main() !void {
         token.print();
     }
 
-    std.debug.print("\n\n\n{any}", .{lexer.tokens.items});
+    std.debug.print("\n\n\n{}", .{std.json.fmt(lexer.tokens.items, .{ .whitespace = .indent_4 })});
 }
