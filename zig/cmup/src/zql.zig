@@ -52,6 +52,10 @@ const Lexer = struct {
         };
     }
 
+    pub inline fn getCurrentSymbol(lexer: *Lexer) u8 {
+        return lexer.input[lexer.position];
+    }
+
     pub fn getTokenType(lexeme: []const u8) TokenType {
         if (std.mem.eql(u8, lexeme, "require")) {
             return TokenType.Require;
@@ -66,7 +70,7 @@ const Lexer = struct {
 
     pub fn shouldConsume(lexer: *Lexer, isString: bool) bool {
         if (isString) {
-            if (lexer.input[lexer.position] != '\'') {
+            if (lexer.getCurrentSymbol() != '\'') {
                 return true;
             }
 
@@ -75,7 +79,7 @@ const Lexer = struct {
             return false;
         }
 
-        return !std.ascii.isWhitespace(lexer.input[lexer.position]);
+        return !std.ascii.isWhitespace(lexer.getCurrentSymbol());
     }
 
     pub fn nextToken(lexer: *Lexer) !?Token {
@@ -83,13 +87,11 @@ const Lexer = struct {
             return null;
         }
 
-        while (std.ascii.isWhitespace(lexer.input[lexer.position])) {
+        while (std.ascii.isWhitespace(lexer.getCurrentSymbol())) {
             lexer.position += 1;
         }
 
         const start = lexer.position;
-
-        // TODO: refactor this later
 
         const isString = lexer.input[start] == '\'';
 
