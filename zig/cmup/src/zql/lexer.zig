@@ -10,6 +10,8 @@ pub const TokenType = enum {
     Add,
     All,
     From,
+    Where,
+
     Unknown, // remove in future
 };
 
@@ -37,7 +39,6 @@ pub const Token = struct {
 
 pub const Lexer = struct {
     // TODO: implement context stack (after implementing all tokens)
-
     input: []const u8,
     position: usize,
     tokens: std.ArrayList(Token),
@@ -81,8 +82,12 @@ pub const Lexer = struct {
             return TokenType.All;
         }
 
+        if (std.mem.eql(u8, lexeme, "where")) {
+            return TokenType.Where;
+        }
+
         if (lexer.getLastToken()) |token| {
-            if (token.type == .Require or token.type == .Add) {
+            if (token.type == .Require or token.type == .From) {
                 return TokenType.Identifier;
             }
         }
