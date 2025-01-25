@@ -37,6 +37,4 @@ pub fn main() !void {
     for (lexer.tokens.items) |token| {
         token.print();
     }
-
-    std.debug.print("\n\n\n{}", .{std.json.fmt(lexer.tokens.items, .{ .whitespace = .indent_2 })});
 }
