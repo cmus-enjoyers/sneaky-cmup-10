@@ -11,6 +11,7 @@ pub const TokenType = enum {
     All,
     From,
     Where,
+    Contains,
 
     Unknown, // remove in future
 };
@@ -86,8 +87,12 @@ pub const Lexer = struct {
             return TokenType.Where;
         }
 
+        if (std.mem.eql(u8, lexeme, "contains")) {
+            return TokenType.Contains;
+        }
+
         if (lexer.getLastToken()) |token| {
-            if (token.type == .Require or token.type == .From) {
+            if (token.type == .Require or token.type == .From or token.type == .Where) {
                 return TokenType.Identifier;
             }
         }
