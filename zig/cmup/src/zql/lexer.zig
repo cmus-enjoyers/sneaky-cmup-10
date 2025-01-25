@@ -152,6 +152,7 @@ pub const Lexer = struct {
                     try err.print(
                         lexer.allocator,
                         stderr,
+                        err.Error.UnterminatedString,
                         lexer.line_position,
                         lexer.line,
                         lexer.input[start..lexer.position],

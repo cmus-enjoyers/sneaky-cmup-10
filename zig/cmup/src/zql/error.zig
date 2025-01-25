@@ -1,7 +1,25 @@
 const std = @import("std");
 const colors = @import("../utils/colors.zig");
 
-pub fn print(allocator: std.mem.Allocator, out: std.fs.File, line_position: usize, line: usize, lexeme: []const u8, input: []const u8) !void {
+pub const Error = enum {
+    UnterminatedString,
+};
+
+pub fn getErrorMessage(err: Error) []const u8 {
+    return switch (err) {
+        .UnterminatedString => "Unterminated string",
+    };
+}
+
+pub fn print(
+    allocator: std.mem.Allocator,
+    out: std.fs.File,
+    err: Error,
+    line_position: usize,
+    line: usize,
+    lexeme: []const u8,
+    input: []const u8,
+) !void {
     const line_end = if (std.ascii.indexOfIgnoreCasePos(input, line_position + 1, "\n")) |value| value else input.len;
 
     const err_line = input[line_position..line_end];
@@ -19,8 +37,13 @@ pub fn print(allocator: std.mem.Allocator, out: std.fs.File, line_position: usiz
 
     const message = try std.fmt.allocPrint(
         allocator,
-        colors.red_text("\nError") ++ colors.dim_text(" => ") ++ "Unterminated string at line {}\n\n" ++ colors.dim_text("{} ▎ ") ++ "{s}\n",
-        .{ line, line, msg },
+        colors.red_text("\nError") ++ colors.dim_text(" => ") ++ "{s} at line {}\n\n" ++ colors.dim_text("{} ▎ ") ++ "{s}\n",
+        .{
+            getErrorMessage(err),
+            line,
+            line,
+            msg,
+        },
     );
     defer allocator.free(message);
 
