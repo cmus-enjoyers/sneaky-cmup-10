@@ -38,11 +38,15 @@ pub const Token = struct {
     }
 };
 
+const ContextType = enum {
+    Require,
+};
+
 pub const Lexer = struct {
-    // TODO: implement context stack (after implementing all tokens)
     input: []const u8,
     position: usize,
     tokens: std.ArrayList(Token),
+    context_stack: std.ArrayList(ContextType),
     allocator: std.mem.Allocator,
     line_position: usize,
     line: usize,
@@ -52,10 +56,27 @@ pub const Lexer = struct {
             .input = input,
             .position = 0,
             .tokens = std.ArrayList(Token).init(allocator),
+            .context_stack = std.ArrayList(ContextType).init(allocator),
             .allocator = allocator,
             .line_position = 0,
             .line = 1,
         };
+    }
+
+    pub fn pushContext(lexer: *Lexer, context: ContextType) !void {
+        try lexer.context_stack.append(context);
+    }
+
+    pub fn popContext(lexer: *Lexer) ContextType {
+        return lexer.context_stack.pop();
+    }
+
+    pub fn peekContext(lexer: *Lexer) ?ContextType {
+        if (lexer.context_stack.items.len > 0) {
+            return lexer.context_stack.items[lexer.context_stack.items.len - 1];
+        }
+
+        return null;
     }
 
     pub inline fn getCurrentSymbol(lexer: *Lexer) u8 {
@@ -68,6 +89,7 @@ pub const Lexer = struct {
 
     pub fn getTokenType(lexer: Lexer, lexeme: []const u8) TokenType {
         if (std.mem.eql(u8, lexeme, "require")) {
+            lexer.pushContext(ContextType.Require);
             return TokenType.Require;
         }
 
@@ -91,10 +113,10 @@ pub const Lexer = struct {
             return TokenType.Contains;
         }
 
-        if (lexer.getLastToken()) |token| {
-            if (token.type == .Require or token.type == .From or token.type == .Where) {
-                return TokenType.Identifier;
-            }
+        if (lexer.peekContext()) |context| {
+            return switch (context) {
+                .Require => TokenType.Identifier,
+            };
         }
 
         return TokenType.Unknown;

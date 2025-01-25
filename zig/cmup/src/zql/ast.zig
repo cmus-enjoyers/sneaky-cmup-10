@@ -21,4 +21,5 @@ const NodeData = union(enum) {
 
 pub const ASTNode = struct {
     type: NodeType,
+    data: NodeData,
 };
