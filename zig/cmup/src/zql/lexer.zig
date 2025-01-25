@@ -8,6 +8,8 @@ pub const TokenType = enum {
     String,
     EOL,
     Add,
+    All,
+    From,
     Unknown, // remove in future
 };
 
@@ -34,6 +36,8 @@ pub const Token = struct {
 };
 
 pub const Lexer = struct {
+    // TODO: implement context stack (after implementing all tokens)
+
     input: []const u8,
     position: usize,
     tokens: std.ArrayList(Token),
@@ -48,7 +52,7 @@ pub const Lexer = struct {
             .tokens = std.ArrayList(Token).init(allocator),
             .allocator = allocator,
             .line_position = 0,
-            .line = 0,
+            .line = 1,
         };
     }
 
@@ -67,6 +71,14 @@ pub const Lexer = struct {
 
         if (std.mem.eql(u8, lexeme, "add")) {
             return TokenType.Add;
+        }
+
+        if (std.mem.eql(u8, lexeme, "from")) {
+            return TokenType.From;
+        }
+
+        if (std.mem.eql(u8, lexeme, "all")) {
+            return TokenType.All;
         }
 
         if (lexer.getLastToken()) |token| {
