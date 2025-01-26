@@ -44,6 +44,8 @@ pub const Token = struct {
 
 const ContextType = enum {
     Require,
+    Add,
+    Where,
 };
 
 pub const Lexer = struct {
@@ -93,12 +95,13 @@ pub const Lexer = struct {
 
     pub fn getTokenType(lexer: *Lexer, lexeme: []const u8) TokenType {
         if (std.mem.eql(u8, lexeme, "require")) {
-            // FIX: fix this later
+            // FIX: fix `catch unreachable` later
             lexer.pushContext(ContextType.Require) catch unreachable;
             return TokenType.Require;
         }
 
         if (std.mem.eql(u8, lexeme, "add")) {
+            lexer.pushContext(ContextType.Add) catch unreachable;
             return TokenType.Add;
         }
 
@@ -111,6 +114,7 @@ pub const Lexer = struct {
         }
 
         if (std.mem.eql(u8, lexeme, "where")) {
+            lexer.pushContext(ContextType.Where) catch unreachable;
             return TokenType.Where;
         }
 
@@ -120,7 +124,7 @@ pub const Lexer = struct {
 
         if (lexer.peekContext()) |context| {
             return switch (context) {
-                .Require => TokenType.Identifier,
+                .Require, .Where, .Add => TokenType.Identifier,
             };
         }
 
