@@ -69,6 +69,11 @@ pub const Lexer = struct {
         };
     }
 
+    pub fn deinit(lexer: *Lexer) !void {
+        lexer.tokens.deinit();
+        lexer.context_stack.deinit();
+    }
+
     pub fn pushContext(lexer: *Lexer, context: ContextType) !void {
         try lexer.context_stack.append(context);
     }
