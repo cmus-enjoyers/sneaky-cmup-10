@@ -13,7 +13,7 @@ pub const TokenType = enum {
     Where,
     Contains,
 
-    Unknown, // remove in future
+    Unknown,
 };
 
 pub fn isNewline(value: u8) bool {
@@ -93,15 +93,15 @@ pub const Lexer = struct {
         return lexer.tokens.items[lexer.tokens.items.len - 1];
     }
 
-    pub fn getTokenType(lexer: *Lexer, lexeme: []const u8) TokenType {
+    pub fn getTokenType(lexer: *Lexer, lexeme: []const u8) !TokenType {
         if (std.mem.eql(u8, lexeme, "require")) {
             // FIX: fix `catch unreachable` later
-            lexer.pushContext(ContextType.Require) catch unreachable;
+            try lexer.pushContext(ContextType.Require);
             return TokenType.Require;
         }
 
         if (std.mem.eql(u8, lexeme, "add")) {
-            lexer.pushContext(ContextType.Add) catch unreachable;
+            try lexer.pushContext(ContextType.Add);
             return TokenType.Add;
         }
 
@@ -114,7 +114,7 @@ pub const Lexer = struct {
         }
 
         if (std.mem.eql(u8, lexeme, "where")) {
-            lexer.pushContext(ContextType.Where) catch unreachable;
+            try lexer.pushContext(ContextType.Where);
             return TokenType.Where;
         }
 
@@ -208,7 +208,7 @@ pub const Lexer = struct {
         const lexeme = lexer.input[start..lexer.position];
 
         const token = Token{
-            .type = if (is_string) TokenType.String else lexer.getTokenType(lexeme),
+            .type = if (is_string) TokenType.String else try lexer.getTokenType(lexeme),
             .lexeme = lexeme,
         };
 
