@@ -87,9 +87,10 @@ pub const Lexer = struct {
         return lexer.tokens.items[lexer.tokens.items.len - 1];
     }
 
-    pub fn getTokenType(lexer: Lexer, lexeme: []const u8) TokenType {
+    pub fn getTokenType(lexer: *Lexer, lexeme: []const u8) TokenType {
         if (std.mem.eql(u8, lexeme, "require")) {
-            lexer.pushContext(ContextType.Require);
+            // FIX: fix this later
+            lexer.pushContext(ContextType.Require) catch unreachable;
             return TokenType.Require;
         }
 
