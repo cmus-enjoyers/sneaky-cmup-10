@@ -1,5 +1,6 @@
 // TODO: implement abstract syntax tree
-const lexer = @import("lexer.zig");
+const Lexer = @import("lexer.zig").Lexer;
+const std = @import("std");
 
 pub const NodeType = enum {
     RequireStatement,
@@ -22,4 +23,22 @@ const NodeData = union(enum) {
 pub const ASTNode = struct {
     type: NodeType,
     data: NodeData,
+};
+
+pub const Parser = struct {
+    lexer: *Lexer,
+    allocator: std.mem.Allocator,
+    nodes: std.ArrayList(ASTNode),
+
+    pub fn init(lexer: *Lexer, allocator: std.mem.Allocator) Parser {
+        return Parser{
+            .lexer = lexer,
+            .allocator = allocator,
+            .nodes = std.ArrayList(ASTNode).init(allocator),
+        };
+    }
+
+    pub fn deinit(parser: *Parser) void {
+        parser.nodes.deinit();
+    }
 };

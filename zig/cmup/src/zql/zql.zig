@@ -19,6 +19,7 @@
 
 const std = @import("std");
 const Lexer = @import("lexer.zig").Lexer;
+const Parser = @import("ast.zig").Parser;
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -35,7 +36,14 @@ pub fn main() !void {
         }
     }
 
+    std.debug.print("\n", .{});
+
     for (lexer.tokens.items) |token| {
         token.print();
     }
+
+    std.debug.print("\n{}\n", .{std.json.fmt(lexer.tokens.items, .{ .whitespace = .indent_2 })});
+
+    var parser = Parser.init(&lexer, allocator);
+    defer parser.deinit();
 }
