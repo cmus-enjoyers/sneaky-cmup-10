@@ -16,6 +16,10 @@ pub const TokenType = enum {
     Unknown, // remove in future
 };
 
+pub fn isNewline(value: u8) bool {
+    return value == '\n';
+}
+
 pub const Token = struct {
     type: TokenType,
     lexeme: []const u8,
@@ -67,8 +71,8 @@ pub const Lexer = struct {
         try lexer.context_stack.append(context);
     }
 
-    pub fn popContext(lexer: *Lexer) ContextType {
-        return lexer.context_stack.pop();
+    pub fn popContext(lexer: *Lexer) ?ContextType {
+        return lexer.context_stack.popOrNull();
     }
 
     pub fn peekContext(lexer: *Lexer) ?ContextType {
@@ -145,6 +149,11 @@ pub const Lexer = struct {
         return token;
     }
 
+    pub fn handleNewLine(lexer: *Lexer) void {
+        lexer.line_position = lexer.position;
+        lexer.line += 1;
+    }
+
     pub fn nextToken(lexer: *Lexer) !?Token {
         if (lexer.position == lexer.input.len - 1) {
             return try lexer.addEolToken();
@@ -153,9 +162,8 @@ pub const Lexer = struct {
         while (std.ascii.isWhitespace(lexer.getCurrentSymbol())) {
             lexer.position += 1;
 
-            if (lexer.getCurrentSymbol() == '\n' and lexer.position != lexer.input.len - 1) {
-                lexer.line_position = lexer.position;
-                lexer.line += 1;
+            if (isNewline(lexer.getCurrentSymbol()) and lexer.position != lexer.input.len - 1) {
+                lexer.handleNewLine();
             }
         }
 
@@ -188,9 +196,8 @@ pub const Lexer = struct {
 
             lexer.position += 1;
 
-            if (lexer.getCurrentSymbol() == '\n' and lexer.position != lexer.input.len - 1) {
-                lexer.line_position = lexer.position;
-                lexer.line += 1;
+            if (isNewline(lexer.getCurrentSymbol()) and lexer.position != lexer.input.len - 1) {
+                lexer.handleNewLine();
             }
         }
 
@@ -200,6 +207,10 @@ pub const Lexer = struct {
             .type = if (is_string) TokenType.String else lexer.getTokenType(lexeme),
             .lexeme = lexeme,
         };
+
+        if (isNewline(lexer.getCurrentSymbol())) {
+            _ = lexer.popContext();
+        }
 
         try lexer.tokens.append(token);
 
