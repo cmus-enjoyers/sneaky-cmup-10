@@ -95,7 +95,6 @@ pub const Lexer = struct {
 
     pub fn getTokenType(lexer: *Lexer, lexeme: []const u8) !TokenType {
         if (std.mem.eql(u8, lexeme, "require")) {
-            // FIX: fix `catch unreachable` later
             try lexer.pushContext(ContextType.Require);
             return TokenType.Require;
         }
