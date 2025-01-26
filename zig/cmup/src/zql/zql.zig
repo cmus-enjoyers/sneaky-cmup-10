@@ -2,7 +2,8 @@
 //
 // require jump-bangers, vktrenokh-stwv
 //
-// add all from jump-bangers and add all from vktrenokh-stwv where name contains 'voj'
+// add all from jump-bangers
+// add all from vktrenokh-stwv where name contains 'voj'
 //
 
 // The name of the new playlist should be derived from the ZQL file name
@@ -16,6 +17,9 @@
 //
 // String literals should only be created using single quotes ('').
 // The single quote character (') within a string can be escaped using the backslash (\) character.
+
+// TODO: add comments
+// TODO: hide playlist statement
 
 const std = @import("std");
 const Lexer = @import("lexer.zig").Lexer;
