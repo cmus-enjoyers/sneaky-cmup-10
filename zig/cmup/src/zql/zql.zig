@@ -27,6 +27,7 @@ pub fn main() !void {
     const allocator = arena.allocator();
 
     var lexer = Lexer.init(@embedFile("./test.zql"), allocator);
+    defer lexer.deinit();
 
     while (lexer.nextToken() catch std.process.exit(1)) |val| {
         if (val.type == .EOL) {

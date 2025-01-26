@@ -69,7 +69,7 @@ pub const Lexer = struct {
         };
     }
 
-    pub fn deinit(lexer: *Lexer) !void {
+    pub fn deinit(lexer: *Lexer) void {
         lexer.tokens.deinit();
         lexer.context_stack.deinit();
     }
@@ -162,11 +162,7 @@ pub const Lexer = struct {
         lexer.line += 1;
     }
 
-    pub fn nextToken(lexer: *Lexer) !?Token {
-        if (lexer.position == lexer.input.len - 1) {
-            return try lexer.addEolToken();
-        }
-
+    pub fn skipWhitespaces(lexer: *Lexer) void {
         while (std.ascii.isWhitespace(lexer.getCurrentSymbol())) {
             lexer.position += 1;
 
@@ -174,6 +170,14 @@ pub const Lexer = struct {
                 lexer.handleNewLine();
             }
         }
+    }
+
+    pub fn nextToken(lexer: *Lexer) !?Token {
+        if (lexer.position == lexer.input.len - 1) {
+            return try lexer.addEolToken();
+        }
+
+        lexer.skipWhitespaces();
 
         const start = lexer.position;
 
