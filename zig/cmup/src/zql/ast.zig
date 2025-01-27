@@ -53,6 +53,15 @@ pub const Parser = struct {
         parser.position += 1;
     }
 
+    pub fn printSyntaxError(parser: *Parser, token: lxer.Token) !void {
+        try token.printErr(
+            parser.allocator,
+            std.io.getStdErr(),
+            err.Error.SyntaxError,
+            parser.lexer.input,
+        );
+    }
+
     pub fn peekNextToken(parser: *Parser) ?lxer.Token {
         if (parser.position + 1 >= parser.lexer.tokens.items.len - 1) {
             return null;
@@ -76,35 +85,19 @@ pub const Parser = struct {
         }
 
         if (sources.items.len == 0) {
-            try token.printErr(
-                parser.allocator,
-                std.io.getStdErr(),
-                err.Error.SyntaxError,
-                parser.lexer.input,
-            );
+            try parser.printSyntaxError(token);
 
             return error.SyntaxError;
         }
 
-        const node = ASTNode{
+        try parser.nodes.append(ASTNode{
             .type = .RequireStatement,
             .data = .{
                 .RequireStatement = .{
                     .sources = sources.items,
                 },
             },
-        };
-
-        try parser.nodes.append(node);
-    }
-
-    pub fn printSyntaxError(parser: *Parser, token: lxer.Token) !void {
-        try token.printErr(
-            parser.allocator,
-            std.io.getStdErr(),
-            err.Error.SyntaxError,
-            parser.lexer.input,
-        );
+        });
     }
 
     pub fn expectTokenType(parser: *Parser, current_token: lxer.Token, expectedType: lxer.TokenType) !lxer.Token {
