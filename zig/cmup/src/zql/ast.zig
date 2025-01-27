@@ -68,6 +68,10 @@ pub const Parser = struct {
             try sources.append(value.lexeme);
         }
 
+        if (sources.items.len == 0) {
+            return error.SyntaxError;
+        }
+
         const node = ASTNode{
             .type = .RequireStatement,
             .data = .{
