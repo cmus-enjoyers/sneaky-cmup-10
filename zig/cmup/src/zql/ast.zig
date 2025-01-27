@@ -2,6 +2,7 @@
 const lxer = @import("lexer.zig");
 const Lexer = lxer.Lexer;
 const std = @import("std");
+const err = @import("error.zig");
 
 pub const NodeType = enum {
     RequireStatement,
@@ -53,13 +54,12 @@ pub const Parser = struct {
         return parser.lexer.tokens.items[parser.position + 1];
     }
 
-    pub fn parseRequire(parser: *Parser) !void {
+    pub fn parseRequire(parser: *Parser, token: lxer.Token) !void {
         // TODO: fix memory leak here later
         var sources = std.ArrayList([]const u8).init(parser.allocator);
 
         while (parser.peekNextToken()) |value| {
             if (value.type != .Identifier) {
-                std.debug.print("break\n", .{});
                 break;
             }
 
@@ -69,6 +69,13 @@ pub const Parser = struct {
         }
 
         if (sources.items.len == 0) {
+            try token.printErr(
+                parser.allocator,
+                std.io.getStdErr(),
+                err.Error.SyntaxError,
+                parser.lexer.input,
+            );
+
             return error.SyntaxError;
         }
 
@@ -91,7 +98,7 @@ pub const Parser = struct {
             const item = parser.lexer.tokens.items[parser.position];
 
             try switch (item.type) {
-                .Require => parser.parseRequire(),
+                .Require => parser.parseRequire(item),
                 else => std.debug.print("unknown token\n", .{}),
             };
         }

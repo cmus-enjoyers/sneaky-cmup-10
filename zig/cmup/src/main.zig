@@ -56,5 +56,5 @@ pub fn main() !void {
     //     return error.NoHome;
     // }
     //
-    try zql.main();
+    zql.main() catch std.process.exit(1);
 }

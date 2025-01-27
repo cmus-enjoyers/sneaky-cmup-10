@@ -23,6 +23,8 @@ pub fn isNewline(value: u8) bool {
 pub const Token = struct {
     type: TokenType,
     lexeme: []const u8,
+    line: usize,
+    line_position: usize,
 
     pub fn print(self: Token) void {
         const token_type_fmt = comptime colors.green_text("{s}");
@@ -39,6 +41,18 @@ pub const Token = struct {
                 .{token_type},
             );
         }
+    }
+
+    pub fn printErr(token: Token, allocator: std.mem.Allocator, out: std.fs.File, er: err.Error, input: []const u8) !void {
+        try err.print(
+            allocator,
+            out,
+            er,
+            token.line_position,
+            token.line,
+            token.lexeme,
+            input,
+        );
     }
 };
 
@@ -150,7 +164,12 @@ pub const Lexer = struct {
     }
 
     pub fn addEolToken(lexer: *Lexer) !Token {
-        const token = Token{ .type = .EOL, .lexeme = "" };
+        const token = Token{
+            .type = .EOL,
+            .lexeme = "",
+            .line = lexer.line,
+            .line_position = lexer.line_position,
+        };
 
         try lexer.tokens.append(token);
 
@@ -218,6 +237,8 @@ pub const Lexer = struct {
         const token = Token{
             .type = if (is_string) TokenType.String else try lexer.getTokenType(lexeme),
             .lexeme = lexeme,
+            .line = lexer.line,
+            .line_position = lexer.line_position,
         };
 
         if (isNewline(lexer.getCurrentSymbol())) {

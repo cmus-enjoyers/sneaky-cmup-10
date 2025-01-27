@@ -3,11 +3,13 @@ const colors = @import("../utils/colors.zig");
 
 pub const Error = enum {
     UnterminatedString,
+    SyntaxError,
 };
 
 pub fn getErrorMessage(err: Error) []const u8 {
     return switch (err) {
         .UnterminatedString => "Unterminated string",
+        .SyntaxError => "Syntax error",
     };
 }
 
@@ -29,15 +31,21 @@ pub fn print(
     const text = try colors.redUndercurledTextRuntime(allocator, lexeme);
     defer allocator.free(text);
 
+    const content_before_invalid_text = try allocator.dupe(u8, err_line[0..index]);
+    defer allocator.free(content_before_invalid_text);
+
+    std.mem.replaceScalar(u8, content_before_invalid_text, '\n', 0);
+
     const msg = try std.mem.join(allocator, "", &[_][]const u8{
-        err_line[1..index],
+        content_before_invalid_text,
         text,
         err_line[index + lexeme.len ..],
     });
+    defer allocator.free(msg);
 
     const message = try std.fmt.allocPrint(
         allocator,
-        colors.red_text("\nError") ++ colors.dim_text(" => ") ++ "{s} at line {}\n\n" ++ colors.dim_text("{} ▎ ") ++ "{s}\n",
+        colors.red_text("Error") ++ colors.dim_text(" => ") ++ "{s} at line {}\n\n" ++ colors.dim_text("{} ▎ ") ++ "{s}\n",
         .{
             getErrorMessage(err),
             line,
