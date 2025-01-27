@@ -121,6 +121,8 @@ pub const Parser = struct {
         const from = try parser.expectTokenType(next, .From);
         const source = try parser.expectTokenType(from, .Identifier);
 
+        // TODO: implement filtering nodes
+
         try parser.nodes.append(ASTNode{
             .type = .AddStatement,
             .data = .{
