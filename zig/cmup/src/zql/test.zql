@@ -1,4 +1,4 @@
-require 
+require jump-bangers vktrenokh-stwv
 
 add all from jump-bangers 
 add all from vktrenokh-stwv where name contains 'voj'

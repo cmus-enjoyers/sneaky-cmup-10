@@ -149,8 +149,8 @@ pub const Lexer = struct {
         return TokenType.Unknown;
     }
 
-    pub fn shouldConsume(lexer: *Lexer, isString: bool) bool {
-        if (isString) {
+    pub fn shouldConsume(lexer: *Lexer, is_string: bool) bool {
+        if (is_string) {
             if (lexer.getCurrentSymbol() != '\'') {
                 return true;
             }

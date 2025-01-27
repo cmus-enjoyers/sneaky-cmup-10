@@ -99,7 +99,7 @@ pub const Parser = struct {
 
             try switch (item.type) {
                 .Require => parser.parseRequire(item),
-                else => std.debug.print("unknown token\n", .{}),
+                else => {},
             };
         }
     }
