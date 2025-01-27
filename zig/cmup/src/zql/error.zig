@@ -13,6 +13,8 @@ pub fn getErrorMessage(err: Error) []const u8 {
     };
 }
 
+// TODO: implement hints
+
 pub fn print(
     allocator: std.mem.Allocator,
     out: std.fs.File,

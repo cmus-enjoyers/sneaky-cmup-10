@@ -13,8 +13,11 @@ pub const RequireData = struct {
     sources: [][]const u8,
 };
 
+pub const Filter = struct {};
+
 pub const AddData = struct {
     source: []const u8,
+    filters: ?[]Filter,
 };
 
 const NodeData = union(enum) {
@@ -46,6 +49,10 @@ pub const Parser = struct {
         parser.nodes.deinit();
     }
 
+    pub fn move(parser: *Parser) void {
+        parser.position += 1;
+    }
+
     pub fn peekNextToken(parser: *Parser) ?lxer.Token {
         if (parser.position + 1 >= parser.lexer.tokens.items.len - 1) {
             return null;
@@ -63,7 +70,7 @@ pub const Parser = struct {
                 break;
             }
 
-            parser.position += 1;
+            parser.move();
 
             try sources.append(value.lexeme);
         }
@@ -91,14 +98,64 @@ pub const Parser = struct {
         try parser.nodes.append(node);
     }
 
+    pub fn parseAdd(parser: *Parser, token: lxer.Token) !void {
+        const next = parser.peekNextToken();
+        const stderr = std.io.getStdErr();
+
+        if (next) |value| {
+            if (value.type != .All) {
+                try value.printErr(parser.allocator, stderr, err.Error.SyntaxError, parser.lexer.input);
+                return error.SyntaxError;
+            }
+
+            parser.move();
+
+            const nextt = parser.peekNextToken();
+
+            if (nextt) |next_token| {
+                if (next_token.type != .From) {
+                    try next_token.printErr(parser.allocator, stderr, err.Error.SyntaxError, parser.lexer.input);
+                    return error.SyntaxError;
+                }
+
+                parser.move();
+
+                const source = parser.peekNextToken();
+
+                if (source) |source_value| {
+                    if (source_value.type != .Identifier) {
+                        try source_value.printErr(parser.allocator, stderr, err.Error.SyntaxError, parser.lexer.input);
+                        return error.SyntaxError;
+                    }
+
+                    try parser.nodes.append(ASTNode{
+                        .type = .AddStatement,
+                        .data = .{
+                            .AddStatement = .{
+                                .source = source_value.lexeme,
+                                .filters = null,
+                            },
+                        },
+                    });
+                }
+            }
+
+            return;
+        }
+
+        try token.printErr(parser.allocator, stderr, err.Error.SyntaxError, parser.lexer.input);
+        return error.SyntaxError;
+    }
+
     pub fn parse(parser: *Parser) !void {
         while (parser.position < parser.lexer.tokens.items.len) : ({
-            parser.position += 1;
+            parser.move();
         }) {
             const item = parser.lexer.tokens.items[parser.position];
 
             try switch (item.type) {
                 .Require => parser.parseRequire(item),
+                .Add => parser.parseAdd(item),
                 else => {},
             };
         }
