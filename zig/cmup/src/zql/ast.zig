@@ -98,53 +98,45 @@ pub const Parser = struct {
         try parser.nodes.append(node);
     }
 
-    pub fn parseAdd(parser: *Parser, token: lxer.Token) !void {
-        const next = parser.peekNextToken();
-        const stderr = std.io.getStdErr();
+    pub fn printSyntaxError(parser: *Parser, token: lxer.Token) !void {
+        try token.printErr(
+            parser.allocator,
+            std.io.getStdErr(),
+            err.Error.SyntaxError,
+            parser.lexer.input,
+        );
+    }
 
-        if (next) |value| {
-            if (value.type != .All) {
-                try value.printErr(parser.allocator, stderr, err.Error.SyntaxError, parser.lexer.input);
-                return error.SyntaxError;
-            }
+    pub fn expectTokenType(parser: *Parser, current_token: lxer.Token, expectedType: lxer.TokenType) !lxer.Token {
+        const token = parser.peekNextToken() orelse {
+            try parser.printSyntaxError(current_token);
+            return error.SyntaxError;
+        };
 
-            parser.move();
-
-            const nextt = parser.peekNextToken();
-
-            if (nextt) |next_token| {
-                if (next_token.type != .From) {
-                    try next_token.printErr(parser.allocator, stderr, err.Error.SyntaxError, parser.lexer.input);
-                    return error.SyntaxError;
-                }
-
-                parser.move();
-
-                const source = parser.peekNextToken();
-
-                if (source) |source_value| {
-                    if (source_value.type != .Identifier) {
-                        try source_value.printErr(parser.allocator, stderr, err.Error.SyntaxError, parser.lexer.input);
-                        return error.SyntaxError;
-                    }
-
-                    try parser.nodes.append(ASTNode{
-                        .type = .AddStatement,
-                        .data = .{
-                            .AddStatement = .{
-                                .source = source_value.lexeme,
-                                .filters = null,
-                            },
-                        },
-                    });
-                }
-            }
-
-            return;
+        if (token.type != expectedType) {
+            try parser.printSyntaxError(token);
+            return error.SyntaxError;
         }
 
-        try token.printErr(parser.allocator, stderr, err.Error.SyntaxError, parser.lexer.input);
-        return error.SyntaxError;
+        parser.move();
+
+        return token;
+    }
+
+    pub fn parseAdd(parser: *Parser, token: lxer.Token) !void {
+        const next = try parser.expectTokenType(token, .All);
+        const from = try parser.expectTokenType(next, .From);
+        const source = try parser.expectTokenType(from, .Identifier);
+
+        try parser.nodes.append(ASTNode{
+            .type = .AddStatement,
+            .data = .{
+                .AddStatement = .{
+                    .filters = null,
+                    .source = source.lexeme,
+                },
+            },
+        });
     }
 
     pub fn parse(parser: *Parser) !void {
