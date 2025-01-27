@@ -42,12 +42,10 @@ pub fn main() !void {
 
     std.debug.print("\n", .{});
 
-    for (lexer.tokens.items) |token| {
-        token.print();
-    }
-
-    std.debug.print("\n{}\n", .{std.json.fmt(lexer.tokens.items, .{ .whitespace = .indent_2 })});
-
     var parser = Parser.init(&lexer, allocator);
     defer parser.deinit();
+
+    try parser.parse();
+
+    std.debug.print("{}", .{std.json.fmt(parser.nodes.items, .{ .whitespace = .indent_2 })});
 }

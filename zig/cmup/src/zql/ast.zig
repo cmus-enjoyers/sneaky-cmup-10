@@ -1,5 +1,6 @@
 // TODO: implement abstract syntax tree
-const Lexer = @import("lexer.zig").Lexer;
+const lxer = @import("lexer.zig");
+const Lexer = lxer.Lexer;
 const std = @import("std");
 
 pub const NodeType = enum {
@@ -27,6 +28,7 @@ pub const ASTNode = struct {
 
 pub const Parser = struct {
     lexer: *Lexer,
+    position: usize,
     allocator: std.mem.Allocator,
     nodes: std.ArrayList(ASTNode),
 
@@ -35,10 +37,60 @@ pub const Parser = struct {
             .lexer = lexer,
             .allocator = allocator,
             .nodes = std.ArrayList(ASTNode).init(allocator),
+            .position = 0,
         };
     }
 
     pub fn deinit(parser: *Parser) void {
         parser.nodes.deinit();
+    }
+
+    pub fn peekNextToken(parser: *Parser) ?lxer.Token {
+        if (parser.position + 1 >= parser.lexer.tokens.items.len - 1) {
+            return null;
+        }
+
+        return parser.lexer.tokens.items[parser.position + 1];
+    }
+
+    pub fn parseRequire(parser: *Parser, token: *const lxer.Token) !void {
+        // TODO: fix memory leak here later
+        var sources = std.ArrayList([]const u8).init(parser.allocator);
+
+        while (parser.peekNextToken()) |value| {
+            if (value.type != .Identifier) {
+                break;
+            }
+
+            parser.position += 1;
+
+            try sources.append(value.lexeme);
+        }
+
+        const node = ASTNode{
+            .type = .RequireStatement,
+            .data = .{
+                .RequireStatement = .{
+                    .sources = sources.items,
+                },
+            },
+        };
+
+        _ = token;
+
+        try parser.nodes.append(node);
+    }
+
+    pub fn parse(parser: *Parser) !void {
+        while (parser.position < parser.lexer.tokens.items.len) : ({
+            parser.position += 1;
+        }) {
+            const item = parser.lexer.tokens.items[parser.position];
+
+            try switch (item.type) {
+                .Require => parser.parseRequire(&item),
+                else => std.debug.print("unknown token\n", .{}),
+            };
+        }
     }
 };
