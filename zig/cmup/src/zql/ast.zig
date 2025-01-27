@@ -53,12 +53,13 @@ pub const Parser = struct {
         return parser.lexer.tokens.items[parser.position + 1];
     }
 
-    pub fn parseRequire(parser: *Parser, token: *const lxer.Token) !void {
+    pub fn parseRequire(parser: *Parser) !void {
         // TODO: fix memory leak here later
         var sources = std.ArrayList([]const u8).init(parser.allocator);
 
         while (parser.peekNextToken()) |value| {
             if (value.type != .Identifier) {
+                std.debug.print("break\n", .{});
                 break;
             }
 
@@ -76,8 +77,6 @@ pub const Parser = struct {
             },
         };
 
-        _ = token;
-
         try parser.nodes.append(node);
     }
 
@@ -88,7 +87,7 @@ pub const Parser = struct {
             const item = parser.lexer.tokens.items[parser.position];
 
             try switch (item.type) {
-                .Require => parser.parseRequire(&item),
+                .Require => parser.parseRequire(),
                 else => std.debug.print("unknown token\n", .{}),
             };
         }
