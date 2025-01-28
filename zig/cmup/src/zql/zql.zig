@@ -19,7 +19,35 @@
 // The single quote character (') within a string can be escaped using the backslash (\) character.
 
 // TODO: add comments
+//
+// Example 1:
+//
+// -- silly comment
+//
+// Example 2:
+//
+// ; silly comment
+//
+// Example 3:
+//
+// // silly comment
+//
+// Example 4:
+//
+// $ silly comment
+//
+// Example 5:
+//
+// slikedollar: silly comment
+//
+
 // TODO: hide playlist statement
+//
+// Example:
+//
+// require playlist-1
+//
+// hide playlist-1
 
 // TODO: implement identifier renaming
 
