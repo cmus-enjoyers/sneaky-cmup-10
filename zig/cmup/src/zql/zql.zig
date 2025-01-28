@@ -40,17 +40,21 @@
 //
 // slikedollar: silly comment
 //
-
+//
 // TODO: hide playlist statement
+//
+// Statement that will delete `identifier` from ~/.config/cmus/playlists
 //
 // Example:
 //
 // require playlist-1
 //
 // hide playlist-1
-
+//
 // TODO: implement identifier renaming
-
+//
+// identifier renaming will be helpful because of playlists like "( ´-ω･)︻┻┳══━一~"
+//
 // Example:
 //
 // require very-long-playlist-name-that-just-makes-sense as playlist-one
