@@ -146,7 +146,8 @@ pub const Lexer = struct {
         if (lexer.peekContext()) |context| {
             return switch (context) {
                 .Require, .Where, .Add => TokenType.Identifier,
-                .Comment => {},
+                // TODO: implement comments
+                .Comment => TokenType.Unknown,
             };
         }
 
