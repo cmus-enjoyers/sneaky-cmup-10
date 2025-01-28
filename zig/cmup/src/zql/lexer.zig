@@ -11,6 +11,8 @@ pub const TokenType = enum {
     All,
     From,
     Where,
+
+    // TODO: fix match type
     Contains,
 
     Unknown,

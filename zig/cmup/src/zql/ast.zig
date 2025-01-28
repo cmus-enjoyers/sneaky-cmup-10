@@ -13,14 +13,28 @@ pub const RequireData = struct {
     sources: [][]const u8,
 };
 
+// NOTE: move filtering things into separate module cuz they will grow
 pub const MatchType = enum {
     Is,
     Contains,
+
+    pub fn toMatchType(value: []const u8) !MatchType {
+        if (std.mem.eql(u8, value, "Is")) {
+            return MatchType.Is;
+        }
+
+        if (std.mem.eql(u8, value, "Contains")) {
+            return MatchType.Is;
+        }
+
+        return error.NotMatchType;
+    }
 };
 
 pub const Filter = struct {
     field: []const u8,
     match_type: MatchType,
+    target: []const u8,
 };
 
 pub const AddData = struct {
@@ -131,17 +145,27 @@ pub const Parser = struct {
             if (value.type != .Where) {
                 return null;
             }
+
+            parser.move();
+
+            // TODO: fix memory leaks here
+            var filters = std.ArrayList(Filter).init(parser.allocator);
+
+            const name = try parser.expectTokenType(value, .Identifier);
+            // TODO: fix match type in lexer
+            const match_type = try parser.expectTokenType(name, .Contains);
+            const target = try parser.expectTokenType(match_type, .String);
+
+            try filters.append(Filter{
+                .field = name.lexeme,
+                .match_type = .Contains,
+                .target = target.lexeme,
+            });
+
+            return filters.items;
         }
 
-        // TODO: fix memory leaks here
-        var filters = std.ArrayList(Filter).init(parser.allocator);
-
-        try filters.append(Filter{
-            .field = "where",
-            .match_type = .Contains,
-        });
-
-        return filters.items;
+        return null;
     }
 
     pub fn parseAdd(parser: *Parser, token: lxer.Token) !void {
@@ -150,7 +174,6 @@ pub const Parser = struct {
         const source = try parser.expectTokenType(from, .Identifier);
 
         const filters = try parser.parseFilters();
-        // TODO: implement filtering nodes
 
         try parser.nodes.append(ASTNode{
             .type = .AddStatement,
