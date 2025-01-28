@@ -62,6 +62,7 @@ const ContextType = enum {
     Require,
     Add,
     Where,
+    Comment,
 };
 
 pub const Lexer = struct {
@@ -145,6 +146,7 @@ pub const Lexer = struct {
         if (lexer.peekContext()) |context| {
             return switch (context) {
                 .Require, .Where, .Add => TokenType.Identifier,
+                .Comment => {},
             };
         }
 
