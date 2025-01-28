@@ -152,9 +152,10 @@ pub const Parser = struct {
             var filters = std.ArrayList(Filter).init(parser.allocator);
 
             const name = try parser.expectTokenType(value, .Identifier);
-            // TODO: fix match type in lexer
             const match_type = try parser.expectTokenType(name, .MatchType);
             const target = try parser.expectTokenType(match_type, .String);
+
+            // TODO: impleemnt multiple filters parsing in lexer
 
             try filters.append(Filter{
                 .field = name.lexeme,
