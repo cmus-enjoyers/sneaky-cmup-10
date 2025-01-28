@@ -19,12 +19,12 @@ pub const MatchType = enum {
     Contains,
 
     pub fn toMatchType(value: []const u8) !MatchType {
-        if (std.mem.eql(u8, value, "Is")) {
+        if (std.mem.eql(u8, value, "is")) {
             return MatchType.Is;
         }
 
-        if (std.mem.eql(u8, value, "Contains")) {
-            return MatchType.Is;
+        if (std.mem.eql(u8, value, "contains")) {
+            return MatchType.Contains;
         }
 
         return error.NotMatchType;
@@ -153,12 +153,12 @@ pub const Parser = struct {
 
             const name = try parser.expectTokenType(value, .Identifier);
             // TODO: fix match type in lexer
-            const match_type = try parser.expectTokenType(name, .Contains);
+            const match_type = try parser.expectTokenType(name, .MatchType);
             const target = try parser.expectTokenType(match_type, .String);
 
             try filters.append(Filter{
                 .field = name.lexeme,
-                .match_type = .Contains,
+                .match_type = try MatchType.toMatchType(match_type.lexeme),
                 .target = target.lexeme,
             });
 

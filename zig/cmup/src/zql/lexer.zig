@@ -13,7 +13,7 @@ pub const TokenType = enum {
     Where,
 
     // TODO: fix match type
-    Contains,
+    MatchType,
 
     Unknown,
 };
@@ -138,8 +138,8 @@ pub const Lexer = struct {
             return TokenType.Where;
         }
 
-        if (std.mem.eql(u8, lexeme, "contains")) {
-            return TokenType.Contains;
+        if (std.mem.eql(u8, lexeme, "contains") or std.mem.eql(u8, lexeme, "is")) {
+            return TokenType.MatchType;
         }
 
         if (lexer.peekContext()) |context| {
