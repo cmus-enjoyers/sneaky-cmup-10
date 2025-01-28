@@ -254,4 +254,12 @@ pub const Lexer = struct {
 
         return token;
     }
+
+    pub fn parse(lexer: *Lexer) !void {
+        while (try lexer.nextToken()) |value| {
+            if (value.type == .EOL) {
+                break;
+            }
+        }
+    }
 };

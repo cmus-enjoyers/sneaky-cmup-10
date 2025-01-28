@@ -22,10 +22,14 @@
 // TODO: hide playlist statement
 
 const std = @import("std");
+
 const Lexer = @import("lexer.zig").Lexer;
 const Parser = @import("ast.zig").Parser;
+const Executor = @import("executor.zig").Executor;
 
-pub fn main() !void {
+const CmupPlaylist = @import("../cmup/cmup.zig").CmupPlaylist;
+
+pub fn run(playlists: []CmupPlaylist) !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
 
@@ -34,18 +38,14 @@ pub fn main() !void {
     var lexer = Lexer.init(@embedFile("./test.zql"), allocator);
     defer lexer.deinit();
 
-    while (lexer.nextToken() catch std.process.exit(1)) |val| {
-        if (val.type == .EOL) {
-            break;
-        }
-    }
-
-    std.debug.print("\n{}\n", .{std.json.fmt(lexer.tokens.items, .{ .whitespace = .indent_2 })});
+    try lexer.parse();
 
     var parser = Parser.init(&lexer, allocator);
     defer parser.deinit();
 
     try parser.parse();
 
-    std.debug.print("\n{}\n", .{std.json.fmt(parser.nodes.items, .{ .whitespace = .indent_2 })});
+    var executor = Executor.init(allocator, playlists, parser.nodes.items);
+
+    _ = try executor.execute();
 }

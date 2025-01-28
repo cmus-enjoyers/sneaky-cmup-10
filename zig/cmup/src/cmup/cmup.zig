@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const CmupPlaylist = struct {
+pub const CmupPlaylist = struct {
     name: []const u8,
     content: [][]const u8,
     path: []const u8,
