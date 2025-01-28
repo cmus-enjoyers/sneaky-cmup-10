@@ -1,4 +1,4 @@
-require jump-bangers vktrenokh-stwv
+require iXOR-bed iXOR-nujabes
 
-add all from jump-bangers 
-add all from vktrenokh-stwv where name contains 'voj'
+add all from iXOR-bed
+add all from iXOR-nujabes where name contains 'voj'

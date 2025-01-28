@@ -29,6 +29,27 @@ const Executor = @import("executor.zig").Executor;
 
 const CmupPlaylist = @import("../cmup/cmup.zig").CmupPlaylist;
 
+pub fn putCmupPlaylist(map: *std.StringHashMap(CmupPlaylist), playlist: CmupPlaylist) !void {
+    try map.put(playlist.name, playlist);
+
+    for (playlist.sub_playlists) |sub_playlist| {
+        try putCmupPlaylist(map, sub_playlist.*);
+    }
+}
+
+pub fn cmupPlaylistsToHashMap(
+    allocator: std.mem.Allocator,
+    playlists: []CmupPlaylist,
+) !std.StringHashMap(CmupPlaylist) {
+    var map = std.StringHashMap(CmupPlaylist).init(allocator);
+
+    for (playlists) |playlist| {
+        try putCmupPlaylist(&map, playlist);
+    }
+
+    return map;
+}
+
 pub fn run(playlists: []CmupPlaylist) !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -45,7 +66,10 @@ pub fn run(playlists: []CmupPlaylist) !void {
 
     try parser.parse();
 
-    var executor = Executor.init(allocator, playlists, parser.nodes.items);
+    var hash_map = try cmupPlaylistsToHashMap(allocator, playlists);
+    defer hash_map.deinit();
+
+    var executor = Executor.init(allocator, hash_map, parser.nodes.items);
 
     _ = try executor.execute();
 }

@@ -42,7 +42,7 @@ pub const AddData = struct {
     filters: ?[]Filter,
 };
 
-const NodeData = union(enum) {
+const NodeData = union(NodeType) {
     RequireStatement: RequireData,
     AddStatement: AddData,
 };
