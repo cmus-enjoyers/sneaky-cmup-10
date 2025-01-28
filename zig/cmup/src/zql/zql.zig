@@ -21,6 +21,14 @@
 // TODO: add comments
 // TODO: hide playlist statement
 
+// TODO: implement identifier renaming
+
+// Example:
+//
+// require very-long-playlist-name-that-just-makes-sense as playlist-one
+//
+// add all from playlist-one
+
 const std = @import("std");
 
 const Lexer = @import("lexer.zig").Lexer;
@@ -71,5 +79,7 @@ pub fn run(playlists: []CmupPlaylist) !void {
 
     var executor = Executor.init(allocator, hash_map, parser.nodes.items);
 
-    _ = try executor.execute();
+    const result = try executor.execute();
+
+    std.debug.print("result of zql query {}\n", .{std.json.fmt(result, .{ .whitespace = .indent_2 })});
 }

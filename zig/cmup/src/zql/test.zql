@@ -1,4 +1,5 @@
-require iXOR-bed iXOR-nujabes
+require iXOR-bed 0xFF123-vivaLaFrance iXOR-nujabes
 
 add all from iXOR-bed
+add all from 0xFF123-vivaLaFrance
 add all from iXOR-nujabes where name contains 'voj'

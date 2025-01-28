@@ -35,30 +35,33 @@ pub const Executor = struct {
         }
     }
 
-    pub fn execute(executor: *Executor) !std.ArrayList(CmupPlaylist) {
-        var result = std.ArrayList(CmupPlaylist).init(executor.allocator);
+    pub fn executeAdd(executor: *Executor, result: *std.ArrayList([]const u8), data: Ast.AddData) !void {
+        if (executor.identifiers.get(data.source)) |value| {
+            if (data.filters == null) {
+                try result.appendSlice(value.content);
+            }
+
+            return;
+        }
+
+        return error.ReferenceError;
+    }
+
+    pub fn execute(executor: *Executor) !CmupPlaylist {
+        var result = std.ArrayList([]const u8).init(executor.allocator);
 
         for (executor.ast) |node| {
             try switch (node.data) {
                 NodeType.RequireStatement => |data| executor.executeRequire(data),
-                NodeType.AddStatement => {},
+                NodeType.AddStatement => |data| executor.executeAdd(&result, data),
             };
         }
 
-        _ = &result;
-
-        var iter = executor.identifiers.iterator();
-
-        while (iter.next()) |next| {
-            std.debug.print(
-                "{s} = {}\n",
-                .{
-                    next.key_ptr.*,
-                    std.json.fmt(next.value_ptr, .{ .whitespace = .indent_2 }),
-                },
-            );
-        }
-
-        return result;
+        return CmupPlaylist{
+            .name = "test",
+            .content = result.items,
+            .path = "",
+            .sub_playlists = &[_]*CmupPlaylist{},
+        };
     }
 };
