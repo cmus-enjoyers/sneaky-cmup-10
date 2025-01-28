@@ -35,11 +35,16 @@ pub const Executor = struct {
         }
     }
 
+    pub fn handleFilters() void {}
+
     pub fn executeAdd(executor: *Executor, result: *std.ArrayList([]const u8), data: Ast.AddData) !void {
         if (executor.identifiers.get(data.source)) |value| {
-            if (data.filters == null) {
-                try result.appendSlice(value.content);
+            if (data.filters) |filters| {
+                _ = filters;
+                return;
             }
+
+            try result.appendSlice(value.content);
 
             return;
         }
