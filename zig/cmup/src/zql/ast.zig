@@ -13,7 +13,15 @@ pub const RequireData = struct {
     sources: [][]const u8,
 };
 
-pub const Filter = struct {};
+pub const MatchType = enum {
+    Is,
+    Contains,
+};
+
+pub const Filter = struct {
+    field: []const u8,
+    match_type: MatchType,
+};
 
 pub const AddData = struct {
     source: []const u8,
@@ -116,18 +124,39 @@ pub const Parser = struct {
         return token;
     }
 
+    pub fn parseFilters(parser: *Parser) !?[]Filter {
+        const nextToken = parser.peekNextToken();
+
+        if (nextToken) |value| {
+            if (value.type != .Where) {
+                return null;
+            }
+        }
+
+        // TODO: fix memory leaks here
+        var filters = std.ArrayList(Filter).init(parser.allocator);
+
+        try filters.append(Filter{
+            .field = "where",
+            .match_type = .Contains,
+        });
+
+        return filters.items;
+    }
+
     pub fn parseAdd(parser: *Parser, token: lxer.Token) !void {
         const next = try parser.expectTokenType(token, .All);
         const from = try parser.expectTokenType(next, .From);
         const source = try parser.expectTokenType(from, .Identifier);
 
+        const filters = try parser.parseFilters();
         // TODO: implement filtering nodes
 
         try parser.nodes.append(ASTNode{
             .type = .AddStatement,
             .data = .{
                 .AddStatement = .{
-                    .filters = null,
+                    .filters = filters,
                     .source = source.lexeme,
                 },
             },
