@@ -35,12 +35,31 @@ pub const Executor = struct {
         }
     }
 
-    pub fn handleFilters() void {}
+    pub fn filterPlaylist(executor: *Executor, filters: []Ast.Filter, playlist: CmupPlaylist) !std.ArrayList([]const u8) {
+        var result = std.ArrayList([]const u8).init(executor.allocator);
+
+        for (filters) |filter| {
+            if (std.mem.eql(u8, filter.field, "name")) {
+                for (playlist.content) |track| {
+                    if (filter.match_type == .Contains) {
+                        if (std.ascii.indexOfIgnoreCase(track, "sic") != null) {
+                            try result.append(track);
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
 
     pub fn executeAdd(executor: *Executor, result: *std.ArrayList([]const u8), data: Ast.AddData) !void {
         if (executor.identifiers.get(data.source)) |value| {
             if (data.filters) |filters| {
-                _ = filters;
+                const tracks = try executor.filterPlaylist(filters, value);
+
+                try result.appendSlice(tracks.items);
+
                 return;
             }
 
