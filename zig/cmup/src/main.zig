@@ -62,20 +62,23 @@ pub fn main() !void {
         const cmus_playlist_path = try std.fs.path.join(allocator, &[_][]const u8{ value, ".config/cmus/playlists" });
         const cmus_music_path = try std.fs.path.join(allocator, &.{ value, "Music" });
 
-        const result = try cmup.cmup(allocator, has_write, cmus_music_path, cmus_playlist_path);
+        var result = try cmup.cmup(allocator, has_write, cmus_music_path, cmus_playlist_path);
         defer result.deinit();
 
-        var map = try cmupPlaylistsToHashMap(allocator, result.items);
+        var map = try cmupPlaylistsToHashMap(allocator, result.playlists.items);
         defer map.deinit();
 
         if (hasArg(args, "--print-everything")) {
-            try cmup.printCmupPlaylists(result.items, "");
+            try cmup.printCmupPlaylists(result.playlists.items, "");
         }
 
-        // if (args.len == 3 and std.mem.eql(u8, args[1], "zql")) {
-        //     try zql.run(allocator, map, args[2]);
-        // }
-        try zql.run(allocator, map, "");
+        std.debug.print("{}\n", .{std.json.fmt(result.zql.items, .{ .whitespace = .indent_2 })});
+
+        for (result.zql.items) |path| {
+            const playlist = try zql.run(allocator, map, path);
+
+            try cmup.writeCmupPlaylist(playlist, cmus_playlist_path);
+        }
 
         if (has_write) {
             try printSuccess();

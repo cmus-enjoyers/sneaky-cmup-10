@@ -61,6 +61,10 @@
 //
 // add all from playlist-one
 
+// TODO: implement filtering by metadata
+
+// TODO: implement subplaylist require
+
 const std = @import("std");
 const getFileNameWithoutExtension = @import("../utils/path.zig").getFileNameWithoutExtension;
 
@@ -68,15 +72,16 @@ const Lexer = @import("lexer.zig").Lexer;
 const Parser = @import("ast.zig").Parser;
 const Executor = @import("executor.zig").Executor;
 
-const CmupPlaylist = @import("../cmup/cmup.zig").CmupPlaylist;
+const cmup = @import("../cmup/cmup.zig");
+const CmupPlaylist = cmup.CmupPlaylist;
 
-pub fn run(parent_allocator: std.mem.Allocator, map: std.StringHashMap(CmupPlaylist), path: []const u8) !void {
+pub fn run(parent_allocator: std.mem.Allocator, map: std.StringHashMap(CmupPlaylist), path: []const u8) !CmupPlaylist {
     var arena = std.heap.ArenaAllocator.init(parent_allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
 
-    var file = try std.fs.cwd().openFile("/home/vktrenokh/Documents/sneaky-cmup-10/zig/cmup/src/zql/test.zql", .{ .mode = .read_only });
+    var file = try std.fs.cwd().openFile(path, .{ .mode = .read_only });
     var buf_reader = std.io.bufferedReader(file.reader());
     var stream = buf_reader.reader();
 
@@ -92,13 +97,13 @@ pub fn run(parent_allocator: std.mem.Allocator, map: std.StringHashMap(CmupPlayl
 
     try parser.parse();
 
-    std.debug.print("{}\n", .{std.json.fmt(parser.nodes.items, .{ .whitespace = .indent_2 })});
-
     var executor = Executor.init(allocator, map, parser.nodes.items);
 
-    _ = path;
+    const name = getFileNameWithoutExtension(path);
 
-    const result = try executor.execute(getFileNameWithoutExtension("/home/vktrenokh/Documents/sneaky-cmup-10/zig/cmup/src/zql/test.zql"));
+    const result = try executor.execute(name);
 
-    std.debug.print("result of zql query {}\n", .{std.json.fmt(result, .{ .whitespace = .indent_2 })});
+    std.debug.print("Executed {s} query\n", .{name});
+
+    return result;
 }
