@@ -62,6 +62,7 @@
 // add all from playlist-one
 
 const std = @import("std");
+const getFileNameWithoutExtension = @import("../utils/path.zig").getFileNameWithoutExtension;
 
 const Lexer = @import("lexer.zig").Lexer;
 const Parser = @import("ast.zig").Parser;
@@ -93,7 +94,7 @@ pub fn run(parent_allocator: std.mem.Allocator, map: std.StringHashMap(CmupPlayl
 
     var executor = Executor.init(allocator, map, parser.nodes.items);
 
-    const result = try executor.execute("test");
+    const result = try executor.execute(getFileNameWithoutExtension(path));
 
     std.debug.print("result of zql query {}\n", .{std.json.fmt(result, .{ .whitespace = .indent_2 })});
 }

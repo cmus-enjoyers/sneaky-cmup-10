@@ -13,11 +13,15 @@ pub fn getErrorMessage(err: Error) []const u8 {
     };
 }
 
-const error_prefix = colors.red_text("Error") ++ colors.dim_text(" => ");
+const error_prefix = colors.red_text("Zql Error") ++ colors.dim_text(" => ");
 
 // TODO: implement hints
 
-pub fn print(
+pub fn printSimple(description: []const u8, line: usize) void {
+    std.debug.print(error_prefix ++ "{s} at line {}\n", .{ description, line });
+}
+
+pub fn printToken(
     allocator: std.mem.Allocator,
     out: std.fs.File,
     err: Error,

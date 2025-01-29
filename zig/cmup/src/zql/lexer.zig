@@ -44,7 +44,7 @@ pub const Token = struct {
     }
 
     pub fn printErr(token: Token, allocator: std.mem.Allocator, out: std.fs.File, er: err.Error, input: []const u8) !void {
-        try err.print(
+        try err.printToken(
             allocator,
             out,
             er,
@@ -214,7 +214,7 @@ pub const Lexer = struct {
         while (lexer.shouldConsume(is_string)) {
             if (is_string) {
                 if (lexer.position == lexer.input.len - 1) {
-                    try err.print(
+                    try err.printToken(
                         lexer.allocator,
                         stderr,
                         err.Error.UnterminatedString,
@@ -262,4 +262,3 @@ pub const Lexer = struct {
         }
     }
 };
-

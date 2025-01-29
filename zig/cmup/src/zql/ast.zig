@@ -196,6 +196,10 @@ pub const Parser = struct {
             try switch (item.type) {
                 .Require => parser.parseRequire(item),
                 .Add => parser.parseAdd(item),
+                .Unknown => {
+                    err.printSimple("UnknownSyntax", item.line);
+                    return error.UnknownSyntax;
+                },
                 else => {},
             };
         }
