@@ -16,7 +16,7 @@ pub const TokenType = enum {
     Unknown,
 };
 
-pub fn isNewline(value: u8) bool {
+pub fn isNewline(value: anytype) bool {
     return value == '\n';
 }
 
@@ -105,7 +105,11 @@ pub const Lexer = struct {
         return null;
     }
 
-    pub inline fn getCurrentSymbol(lexer: *Lexer) u8 {
+    pub inline fn getCurrentSymbol(lexer: *Lexer) ?u8 {
+        if (lexer.position <= lexer.input.len - 1) {
+            return null;
+        }
+
         return lexer.input[lexer.position];
     }
 
@@ -158,12 +162,10 @@ pub const Lexer = struct {
                 return true;
             }
 
-            lexer.position += 1;
-
             return false;
         }
 
-        return !std.ascii.isWhitespace(lexer.getCurrentSymbol());
+        return !std.ascii.isWhitespace(lexer.getCurrentSymbol() orelse return false);
     }
 
     pub fn addEolToken(lexer: *Lexer) !Token {
@@ -185,7 +187,7 @@ pub const Lexer = struct {
     }
 
     pub fn skipWhitespaces(lexer: *Lexer) void {
-        while (std.ascii.isWhitespace(lexer.getCurrentSymbol())) {
+        while (std.ascii.isWhitespace(lexer.getCurrentSymbol() orelse return)) {
             lexer.position += 1;
 
             if (isNewline(lexer.getCurrentSymbol()) and lexer.position != lexer.input.len - 1) {
