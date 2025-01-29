@@ -69,13 +69,19 @@ const Executor = @import("executor.zig").Executor;
 
 const CmupPlaylist = @import("../cmup/cmup.zig").CmupPlaylist;
 
-pub fn run(map: std.StringHashMap(CmupPlaylist)) !void {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+pub fn run(parent_allocator: std.mem.Allocator, map: std.StringHashMap(CmupPlaylist), path: []const u8) !void {
+    var arena = std.heap.ArenaAllocator.init(parent_allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
 
-    var lexer = Lexer.init(@embedFile("./test.zql"), allocator);
+    var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
+    var buf_reader = std.io.bufferedReader(file.reader());
+    var stream = buf_reader.reader();
+
+    const query = try stream.readAllAlloc(allocator, 7168);
+
+    var lexer = Lexer.init(query, allocator);
     defer lexer.deinit();
 
     try lexer.parse();
