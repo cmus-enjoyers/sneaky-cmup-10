@@ -75,11 +75,11 @@ pub fn run(parent_allocator: std.mem.Allocator, map: std.StringHashMap(CmupPlayl
 
     const allocator = arena.allocator();
 
-    var file = try std.fs.openFileAbsolute(path, .{ .mode = .read_only });
+    var file = try std.fs.cwd().openFile(path, .{ .mode = .read_only });
     var buf_reader = std.io.bufferedReader(file.reader());
     var stream = buf_reader.reader();
 
-    const query = try stream.readAllAlloc(allocator, 7168);
+    const query = try stream.readAllAlloc(allocator, 102400);
 
     var lexer = Lexer.init(query, allocator);
     defer lexer.deinit();

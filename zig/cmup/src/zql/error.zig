@@ -13,6 +13,8 @@ pub fn getErrorMessage(err: Error) []const u8 {
     };
 }
 
+const error_prefix = colors.red_text("Error") ++ colors.dim_text(" => ");
+
 // TODO: implement hints
 
 pub fn print(
@@ -28,7 +30,10 @@ pub fn print(
 
     const err_line = input[line_position..line_end];
 
-    const index = std.ascii.indexOfIgnoreCase(err_line, lexeme).?;
+    const index = std.ascii.indexOfIgnoreCase(err_line, lexeme) orelse {
+        std.debug.print(error_prefix ++ "UnknownSyntax", .{});
+        return error.UnknownSyntax;
+    };
 
     const text = try colors.redUndercurledTextRuntime(allocator, lexeme);
     defer allocator.free(text);

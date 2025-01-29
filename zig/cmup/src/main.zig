@@ -72,7 +72,9 @@ pub fn main() !void {
             try cmup.printCmupPlaylists(result.items, "");
         }
 
-        try zql.run(allocator, map, "/home/vktrenokh/Documents/sneaky-cmup-10/zig/cmup/src/zql/test.zql");
+        if (args.len == 3 and std.mem.eql(u8, args[1], "zql")) {
+            try zql.run(allocator, map, args[2]);
+        }
 
         if (has_write) {
             try printSuccess();
