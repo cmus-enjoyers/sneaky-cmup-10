@@ -42,7 +42,7 @@ pub const Executor = struct {
             if (std.mem.eql(u8, filter.field, "name")) {
                 for (playlist.content) |track| {
                     if (filter.match_type == .Contains) {
-                        if (std.ascii.indexOfIgnoreCase(track, "sic") != null) {
+                        if (std.ascii.indexOfIgnoreCase(track, filter.target) != null) {
                             try result.append(track);
                         }
                     }
