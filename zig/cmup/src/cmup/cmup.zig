@@ -19,6 +19,7 @@ const cmup_used_music_extensions: []const []const u8 = &[_][]const u8{
 };
 
 const reset = "\x1b[0m";
+const yellow = "\x1b[33m";
 const green = "\x1b[32m";
 const red = "\x1b[31m";
 
@@ -58,10 +59,11 @@ pub fn addMusicToPlaylist(allocator: std.mem.Allocator, path: []const u8, result
         try result.append(try std.fs.path.join(allocator, &.{ path, entry.name }));
     }
 }
+
 pub fn printUnsuportedEntryError(name: []const u8) !void {
     const writer = std.io.getStdErr().writer();
 
-    try writer.print(red ++ "CmupErr" ++ reset ++ ": Unknown entry format at {s}\n", .{name});
+    try writer.print(yellow ++ "Zmup Warning" ++ reset ++ ": Unknown entry format at {s}\n", .{name});
 }
 
 pub fn endsWithDollar(string: []const u8) bool {
