@@ -69,28 +69,7 @@ const Executor = @import("executor.zig").Executor;
 
 const CmupPlaylist = @import("../cmup/cmup.zig").CmupPlaylist;
 
-pub fn putCmupPlaylist(map: *std.StringHashMap(CmupPlaylist), playlist: CmupPlaylist) !void {
-    try map.put(playlist.name, playlist);
-
-    for (playlist.sub_playlists) |sub_playlist| {
-        try putCmupPlaylist(map, sub_playlist.*);
-    }
-}
-
-pub fn cmupPlaylistsToHashMap(
-    allocator: std.mem.Allocator,
-    playlists: []CmupPlaylist,
-) !std.StringHashMap(CmupPlaylist) {
-    var map = std.StringHashMap(CmupPlaylist).init(allocator);
-
-    for (playlists) |playlist| {
-        try putCmupPlaylist(&map, playlist);
-    }
-
-    return map;
-}
-
-pub fn run(playlists: []CmupPlaylist) !void {
+pub fn run(map: std.StringHashMap(CmupPlaylist)) !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
 
@@ -106,12 +85,9 @@ pub fn run(playlists: []CmupPlaylist) !void {
 
     try parser.parse();
 
-    var hash_map = try cmupPlaylistsToHashMap(allocator, playlists);
-    defer hash_map.deinit();
+    var executor = Executor.init(allocator, map, parser.nodes.items);
 
-    var executor = Executor.init(allocator, hash_map, parser.nodes.items);
-
-    const result = try executor.execute();
+    const result = try executor.execute("test");
 
     std.debug.print("result of zql query {}\n", .{std.json.fmt(result, .{ .whitespace = .indent_2 })});
 }

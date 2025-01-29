@@ -84,7 +84,7 @@ pub const Executor = struct {
         return error.ReferenceError;
     }
 
-    pub fn execute(executor: *Executor) !CmupPlaylist {
+    pub fn execute(executor: *Executor, name: []const u8) !CmupPlaylist {
         var result = std.ArrayList([]const u8).init(executor.allocator);
 
         for (executor.ast) |node| {
@@ -95,7 +95,7 @@ pub const Executor = struct {
         }
 
         return CmupPlaylist{
-            .name = "test",
+            .name = name,
             .content = result.items,
             .path = "",
             .sub_playlists = &[_]*CmupPlaylist{},

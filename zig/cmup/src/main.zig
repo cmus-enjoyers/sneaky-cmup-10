@@ -1,6 +1,7 @@
 const zql = @import("zql/zql.zig");
 const cmup = @import("cmup/cmup.zig");
 const std = @import("std");
+const CmupPlaylist = cmup.CmupPlaylist;
 
 pub fn printSuccess() !void {
     const writer = std.io.getStdOut().writer();
@@ -23,6 +24,27 @@ pub fn hasArg(args: [][]u8, comptime arg_name: []const u8) bool {
     return false;
 }
 
+pub fn putCmupPlaylist(map: *std.StringHashMap(CmupPlaylist), playlist: CmupPlaylist) !void {
+    try map.put(playlist.name, playlist);
+
+    for (playlist.sub_playlists) |sub_playlist| {
+        try putCmupPlaylist(map, sub_playlist.*);
+    }
+}
+
+pub fn cmupPlaylistsToHashMap(
+    allocator: std.mem.Allocator,
+    playlists: []CmupPlaylist,
+) !std.StringHashMap(CmupPlaylist) {
+    var map = std.StringHashMap(CmupPlaylist).init(allocator);
+
+    for (playlists) |playlist| {
+        try putCmupPlaylist(&map, playlist);
+    }
+
+    return map;
+}
+
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -43,11 +65,14 @@ pub fn main() !void {
         const result = try cmup.cmup(allocator, has_write, cmus_music_path, cmus_playlist_path);
         defer result.deinit();
 
+        var map = try cmupPlaylistsToHashMap(allocator, result.items);
+        defer map.deinit();
+
         if (hasArg(args, "--print-everything")) {
             try cmup.printCmupPlaylists(result.items, "");
         }
 
-        try zql.run(result.items);
+        try zql.run(map);
 
         if (has_write) {
             try printSuccess();
