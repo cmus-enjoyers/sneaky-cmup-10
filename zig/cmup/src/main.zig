@@ -77,7 +77,9 @@ pub fn main() !void {
         for (result.zql.items) |path| {
             const playlist = try zql.run(allocator, map, path);
 
-            try cmup.writeCmupPlaylist(playlist, cmus_playlist_path);
+            if (has_write) {
+                try cmup.writeCmupPlaylist(playlist, cmus_playlist_path);
+            }
         }
 
         if (has_write) {
