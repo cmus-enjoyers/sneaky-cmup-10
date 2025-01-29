@@ -1,20 +1,11 @@
 // NOTE: move filtering logic into separate module cuz it wlll grow
 
 const std = @import("std");
+const path = @import("../utils/path.zig");
 const CmupPlaylist = @import("../cmup/cmup.zig").CmupPlaylist;
 const Ast = @import("ast.zig");
 const NodeType = Ast.NodeType;
 const ASTNode = Ast.ASTNode;
-
-fn getFileNameWithoutExtension(path: []const u8) []const u8 {
-    const file_name = std.fs.path.basename(path);
-
-    if (std.mem.lastIndexOfScalar(u8, file_name, '.')) |dot_index| {
-        return file_name[0..dot_index];
-    }
-
-    return file_name;
-}
 
 pub const Executor = struct {
     playlists: std.StringHashMap(CmupPlaylist),
@@ -61,7 +52,7 @@ pub const Executor = struct {
                             }
                         },
                         .Is => {
-                            const name = getFileNameWithoutExtension(track);
+                            const name = path.getFileNameWithoutExtension(track);
 
                             if (std.mem.eql(u8, name, filter.target)) {
                                 try result.append(track);
