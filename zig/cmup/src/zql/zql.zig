@@ -76,7 +76,7 @@ pub fn run(parent_allocator: std.mem.Allocator, map: std.StringHashMap(CmupPlayl
 
     const allocator = arena.allocator();
 
-    var file = try std.fs.cwd().openFile(path, .{ .mode = .read_only });
+    var file = try std.fs.cwd().openFile("/home/vktrenokh/Documents/sneaky-cmup-10/zig/cmup/src/zql/test.zql", .{ .mode = .read_only });
     var buf_reader = std.io.bufferedReader(file.reader());
     var stream = buf_reader.reader();
 
@@ -92,9 +92,13 @@ pub fn run(parent_allocator: std.mem.Allocator, map: std.StringHashMap(CmupPlayl
 
     try parser.parse();
 
+    std.debug.print("{}\n", .{std.json.fmt(parser.nodes.items, .{ .whitespace = .indent_2 })});
+
     var executor = Executor.init(allocator, map, parser.nodes.items);
 
-    const result = try executor.execute(getFileNameWithoutExtension(path));
+    _ = path;
+
+    const result = try executor.execute(getFileNameWithoutExtension("/home/vktrenokh/Documents/sneaky-cmup-10/zig/cmup/src/zql/test.zql"));
 
     std.debug.print("result of zql query {}\n", .{std.json.fmt(result, .{ .whitespace = .indent_2 })});
 }

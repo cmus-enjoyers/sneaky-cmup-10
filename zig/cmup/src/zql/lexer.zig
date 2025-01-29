@@ -106,7 +106,7 @@ pub const Lexer = struct {
     }
 
     pub inline fn getCurrentSymbol(lexer: *Lexer) ?u8 {
-        if (lexer.position <= lexer.input.len - 1) {
+        if (lexer.position >= lexer.input.len - 1) {
             return null;
         }
 
@@ -162,6 +162,8 @@ pub const Lexer = struct {
                 return true;
             }
 
+            lexer.position += 1;
+
             return false;
         }
 
@@ -197,7 +199,7 @@ pub const Lexer = struct {
     }
 
     pub fn nextToken(lexer: *Lexer) !?Token {
-        if (lexer.position == lexer.input.len - 1) {
+        if (lexer.position >= lexer.input.len - 1) {
             return try lexer.addEolToken();
         }
 
