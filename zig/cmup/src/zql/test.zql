@@ -1,5 +1,3 @@
-require iXOR-bed 0xFF123-vivaLaFrance iXOR-nujabes
+require iXOR-bed 
 
-add all from iXOR-bed
-add all from 0xFF123-vivaLaFrance
-add all from iXOR-nujabes where name contains 'sic'
+add all from iXOR-bed where name is 'Gats'
