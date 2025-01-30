@@ -117,9 +117,7 @@ pub fn createCmusSubPlaylist(
         zql_paths,
     );
 
-    if (playlist.content.len > 0) {
-        try ptrs.append(playlist);
-    }
+    try ptrs.append(playlist);
 }
 
 pub fn readCmupPlaylist(
@@ -136,11 +134,11 @@ pub fn readCmupPlaylist(
     var result = std.ArrayList([]const u8).init(allocator);
 
     while (try iterator.next()) |item| {
-        switch (item.kind) {
-            .file => try addMusicToPlaylist(allocator, path, &result, zql_paths, item),
-            .directory => try createCmusSubPlaylist(allocator, &ptrs, cmus_path, path, item.name, zql_paths),
-            else => try printUnsuportedEntryError(item.name),
-        }
+        try switch (item.kind) {
+            .file, .sym_link => addMusicToPlaylist(allocator, path, &result, zql_paths, item),
+            .directory => createCmusSubPlaylist(allocator, &ptrs, cmus_path, path, item.name, zql_paths),
+            else => printUnsuportedEntryError(item.name),
+        };
     }
 
     return CmupReadPlaylist{
@@ -197,7 +195,7 @@ pub fn writeCmupPlaylist(playlist: CmupPlaylist, path: []const u8) !void {
     }
 
     for (playlist.sub_playlists) |sub_playlist| {
-        if (sub_playlist.content.len > 0) {
+        if (sub_playlist.content.len >= 0) {
             try writeCmupPlaylist(sub_playlist.*, path);
         }
     }

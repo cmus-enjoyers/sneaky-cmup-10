@@ -1,6 +1,7 @@
 const zql = @import("zql/zql.zig");
 const cmup = @import("cmup/cmup.zig");
 const std = @import("std");
+const colors = @import("utils/colors.zig");
 const CmupPlaylist = cmup.CmupPlaylist;
 
 pub fn printSuccess() !void {
@@ -22,6 +23,13 @@ pub fn hasArg(args: [][]u8, comptime arg_name: []const u8) bool {
         }
     }
     return false;
+}
+
+pub fn printQueriesInfo(queries_amount: usize) void {
+    std.debug.print(
+        colors.green_text("\nZql" ++ colors.dim_text(": ") ++ "{} queries found \n\n"),
+        .{queries_amount},
+    );
 }
 
 pub fn putCmupPlaylist(map: *std.StringHashMap(CmupPlaylist), playlist: CmupPlaylist) !void {
@@ -72,12 +80,10 @@ pub fn main() !void {
             try cmup.printCmupPlaylists(result.playlists.items, "");
         }
 
-        std.debug.print("{}\n", .{std.json.fmt(result.zql.items, .{ .whitespace = .indent_2 })});
+        if (has_write) {
+            for (result.zql.items) |path| {
+                const playlist = try zql.run(allocator, map, path);
 
-        for (result.zql.items) |path| {
-            const playlist = try zql.run(allocator, map, path);
-
-            if (has_write) {
                 try cmup.writeCmupPlaylist(playlist, cmus_playlist_path);
             }
         }
