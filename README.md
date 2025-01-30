@@ -6,10 +6,11 @@
 4. Wait until 19 or 22 August.
 5. Push changes into your branch.
 
-# Zig installation
+# ZmupZql installation
 
 ```bash
-cd zig/cmup
+  git clone --depth 1 --single-branch https://github.com/cmus-enjoyers/cmup
 
-zig build -Doptimize=ReleaseFast install --prefix ~/.local/
+  cp cmup/zig/cmup
+  zig build -Doptimize=ReleaseFast install --prefix ~/.local
 ```
