@@ -1,5 +1,6 @@
 const zql = @import("zql/zql.zig");
 const cmup = @import("cmup/cmup.zig");
+const clear = @import("cmup/clear.zig").clearPlaylists;
 const std = @import("std");
 const colors = @import("utils/colors.zig");
 const CmupPlaylist = cmup.CmupPlaylist;
@@ -80,6 +81,10 @@ pub fn main() !void {
 
         if (hasArg(args, "--print-everything")) {
             try cmup.printCmupPlaylists(result.playlists.items, "");
+        }
+
+        if (args.len == 2 and std.mem.eql(u8, args[1], "clear")) {
+            try clear(cmus_playlist_path);
         }
 
         try printQueriesInfo(result.zql.items.len);

@@ -261,12 +261,3 @@ pub fn printCmupPlaylists(playlists: []const CmupPlaylist, comptime spacing: []c
         try printCmupPlaylist(item, spacing);
     }
 }
-
-pub fn hasArg(args: [][]u8, comptime arg_name: []const u8) bool {
-    for (args) |arg| {
-        if (std.mem.eql(u8, arg, arg_name)) {
-            return true;
-        }
-    }
-    return false;
-}
