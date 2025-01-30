@@ -42,7 +42,6 @@ pub const Executor = struct {
     pub fn filterPlaylist(executor: *Executor, filters: []Ast.Filter, playlist: CmupPlaylist) !std.ArrayList([]const u8) {
         var result = std.ArrayList([]const u8).init(executor.allocator);
 
-        // TODO: refactor this later
         for (filters) |filter| {
             if (std.mem.eql(u8, filter.field, "name")) {
                 try filterByName(&result, playlist, filter);
