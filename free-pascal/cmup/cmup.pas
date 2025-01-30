@@ -1,13 +1,112 @@
 program Cmup;
 {$mode objfpc}
 
-uses SysUtils, StrUtils, Classes;
+uses SysUtils, StrUtils, Classes, Process, Crt;
 
 type
+  TIntegerArray = array of Integer;
   TAudioFile = record
     FileName: string;
     TrackNumber: Integer;
   end;
+
+function GetMetadataTrackNumbers(const FilePaths: TStringList): TIntegerArray;
+var
+  AProcess: TProcess;
+  OutputLines: TStringList;
+  i: Integer;
+  TrackStr: String;
+begin
+  GetMetadataTrackNumbers := nil;
+  SetLength(GetMetadataTrackNumbers, FilePaths.Count);
+  for i := 0 to High(GetMetadataTrackNumbers) do
+    GetMetadataTrackNumbers[i] := -1;
+
+  if FilePaths.Count = 0 then
+    Exit;
+
+  OutputLines := TStringList.Create;
+  try
+    AProcess := TProcess.Create(nil);
+    try
+      AProcess.Executable := 'ffprobe';
+      AProcess.Parameters.Add('-v');
+      AProcess.Parameters.Add('error');
+      AProcess.Parameters.Add('-select_streams');
+      AProcess.Parameters.Add('a:0');
+      AProcess.Parameters.Add('-show_entries');
+      AProcess.Parameters.Add('format_tags=track');
+      AProcess.Parameters.Add('-of');
+      AProcess.Parameters.Add('default=noprint_wrappers=1:nokey=1');
+      for i := 0 to FilePaths.Count - 1 do
+        AProcess.Parameters.Add(FilePaths[i]);
+
+      AProcess.Options := [poUsePipes, poWaitOnExit];
+      AProcess.Execute;
+      AProcess.WaitOnExit;
+
+      OutputLines.LoadFromStream(AProcess.Output);
+
+      for i := 0 to OutputLines.Count - 1 do
+      begin
+        if i >= FilePaths.Count then
+          Break; // Avoid index out of bounds
+        TrackStr := Trim(OutputLines[i]);
+        if TrackStr <> '' then
+          GetMetadataTrackNumbers[i] := StrToIntDef(TrackStr, -1);
+      end;
+    finally
+      AProcess.Free;
+    end;
+  finally
+    OutputLines.Free;
+  end;
+end;
+  
+function GetMetadataTrackNumber(const FilePath: String): Integer;
+var
+  AProcess: TProcess;
+  OutputLines: TStringList;
+  TrackStr: String;
+begin
+  GetMetadataTrackNumber := -1;
+
+  if not FileExists(FilePath) then
+    Exit;
+
+  OutputLines := TStringList.Create;
+  try
+    AProcess := TProcess.Create(nil);
+    try
+      AProcess.Executable := 'ffprobe';
+      AProcess.Parameters.Add('-v');
+      AProcess.Parameters.Add('error');
+      AProcess.Parameters.Add('-select_streams');
+      AProcess.Parameters.Add('a:0');
+      AProcess.Parameters.Add('-show_entries');
+      AProcess.Parameters.Add('format_tags=track');
+      AProcess.Parameters.Add('-of');
+      AProcess.Parameters.Add('default=noprint_wrappers=1:nokey=1');
+      AProcess.Parameters.Add(FilePath);
+      AProcess.Options := [poUsePipes];
+
+      AProcess.Execute;
+      AProcess.WaitOnExit;
+
+      OutputLines.LoadFromStream(AProcess.Output);
+      if OutputLines.Count > 0 then
+      begin
+        TrackStr := Trim(OutputLines[0]);
+        if TrackStr <> '' then
+          GetMetadataTrackNumber := StrToIntDef(TrackStr, -1);
+      end;
+    finally
+      AProcess.Free;
+    end;
+  finally
+    OutputLines.Free;
+  end;
+end;
 
 function ExtractTrackNumberFromFileName(const FileNameWithExt: string): Integer;
 var
@@ -85,33 +184,72 @@ begin
   end;
 end;
 
-procedure SortByTrackNumber(var Arr: Array of TAudioFile);
+procedure QuickSort(var Arr: array of TAudioFile; Left, Right: Integer);
 var
-  i, j: Integer;
-  Temp: TAudioFile;
+  I, J: Integer;
+  Pivot, Temp: TAudioFile;
 begin
-  for i := 0 to High(Arr) - 1 do
-    for j := 0 to High(Arr) - 1 - i do
-      if (Arr[j].TrackNumber = -1) or 
-         (Arr[j].TrackNumber > Arr[j + 1].TrackNumber) then
-      begin
-        Temp := Arr[j];
-        Arr[j] := Arr[j + 1];
-        Arr[j + 1] := Temp;
-      end;
+  if Left >= Right then Exit;
+  
+  I := Left;
+  J := Right;
+  Pivot := Arr[(Left + Right) div 2];
+  
+  repeat
+    while (Arr[I].TrackNumber < Pivot.TrackNumber) or 
+          ((Arr[I].TrackNumber = Pivot.TrackNumber) and (I < (Left + Right) div 2)) do
+      Inc(I);
+      
+    while (Arr[J].TrackNumber > Pivot.TrackNumber) or 
+          ((Arr[J].TrackNumber = Pivot.TrackNumber) and (J > (Left + Right) div 2)) do
+      Dec(J);
+      
+    if I <= J then
+    begin
+      Temp := Arr[I];
+      Arr[I] := Arr[J];
+      Arr[J] := Temp;
+      Inc(I);
+      Dec(J);
+    end;
+  until I > J;
+  
+  if Left < J then QuickSort(Arr, Left, J);
+  if I < Right then QuickSort(Arr, I, Right);
 end;
 
-procedure ProcessAudioFiles(var AudioFiles: Array of TAudioFile; Files: TStringList);
+procedure SortByTrackNumber(var Arr: Array of TAudioFile);
+begin
+  if Length(Arr) > 1 then
+    QuickSort(Arr, 0, High(Arr));
+end;
+
+procedure ProcessAudioFiles(var AudioFiles: Array of TAudioFile; Files: TStringList; const BaseDirectory: String);
 var
-  TrackNum: Integer;
+  TrackNums: TIntegerArray;
+  FilePaths: TStringList;
   i: Integer;
 begin
-  for i := 0 to Files.Count - 1 do
-  begin
-    TrackNum := ExtractTrackNumberFromFileName(Files[i]);
+  if Files.Count = 0 then
+    Exit;
 
-    AudioFiles[i].FileName := Files[i];
-    AudioFiles[i].TrackNumber := TrackNum;
+  FilePaths := TStringList.Create;
+  try
+    for i := 0 to Files.Count - 1 do
+      FilePaths.Add(BaseDirectory + '/' + Files[i]);
+
+    TrackNums := GetMetadataTrackNumbers(FilePaths);
+
+    for i := 0 to Files.Count - 1 do
+    begin
+      AudioFiles[i].FileName := Files[i];
+      if TrackNums[i] <> -1 then
+        AudioFiles[i].TrackNumber := TrackNums[i]
+      else
+        AudioFiles[i].TrackNumber := ExtractTrackNumberFromFileName(Files[i]);
+    end;
+  finally
+    FilePaths.Free;
   end;
 
   SortByTrackNumber(AudioFiles);
@@ -165,29 +303,32 @@ end;
 
 function Tree(const Directory: String): TStringList;
 var
-  Directories, InnerDirectories: TStringList;
+  Queue: TStringList;
+  CurrentDir: String;
+  Directories: TStringList;
   i: Integer;
 begin
-  Directories := GetNestedDirectoreies(Directory);
   Tree := TStringList.Create;
-  InnerDirectories := TStringList.Create;
-
-  if Directories.Count = 0 then
-  begin
-    Tree.Add(Directory);
-    InnerDirectories.Free;
-    Directories.Free;
-    exit;
+  Queue := TStringList.Create;
+  try
+    Queue.Add(Directory);
+    while Queue.Count > 0 do
+    begin
+      CurrentDir := Queue[0];
+      Queue.Delete(0);
+      Tree.Add(CurrentDir);
+      
+      Directories := GetNestedDirectoreies(CurrentDir);
+      try
+        for i := 0 to Directories.Count - 1 do
+          Queue.Add(CurrentDir + '/' + Directories[i]);
+      finally
+        Directories.Free;
+      end;
+    end;
+  finally
+    Queue.Free;
   end;
-
-  for i := 0 to Directories.Count - 1 do
-  begin
-    InnerDirectories := Tree(Directory + '/' + Directories[i]);
-    Tree.AddStrings(InnerDirectories);
-    InnerDirectories.Free;
-  end;
-
-  Directories.Free;
 end;
 
 function CleanDirName(const DirName: String): String;
@@ -210,7 +351,7 @@ begin
   else
   begin
     FirstPartLength := Length(FirstPart);
-    Rest := copy(Path, FirstPartLength + 2, Length(Path) - FirstPartLength);
+    Rest := Copy(Path, FirstPartLength + 2, Length(Path) - FirstPartLength);
     RestParts := SplitString(Rest, '/');
     FirstOfRest := RestParts[0];
     if FirstOfRest[Length(FirstOfRest)] = '$' then
@@ -222,24 +363,17 @@ end;
 
 function ConvertToPlaylistName(const DirectoryName: String; const BaseDirectoryLength: Integer): String;
 var
-  i, DirectoryLength: Integer;
   StrippedPath: String;
 begin
-  ConvertToPlaylistName := '';
-  for i := 1 to Length(DirectoryName) do
-  begin
-    DirectoryLength := Length(DirectoryName);
-    StrippedPath := copy(DirectoryName, BaseDirectoryLength + 2, DirectoryLength - BaseDirectoryLength);
-    ConvertToPlaylistName := PathToName(StrippedPath);
-  end;
+  StrippedPath := Copy(DirectoryName, BaseDirectoryLength + 2, MaxInt);
+  Result := PathToName(StrippedPath);
 end;
 
 var
   i, j, BaseDirectoryLength: Integer;
   PathToMusicDirectory, PathToCmusPlaylists, PlaylistName: String;
-  Directories, Files: TStringList;
+  Directories, Files, PlaylistLines: TStringList;
   AudioFiles: Array of TAudioFile;
-  CurrentFile: TextFile;
 begin
   if ParamCount < 2 then
   begin
@@ -255,22 +389,26 @@ begin
 
   BaseDirectoryLength := Length(PathToMusicDirectory);
 
-  for i := 0 to Directories.Count - 1 do
+  for i := 1 to Directories.Count - 1 do
   begin
+    WriteLn('Processing directory [', i + 1, '/', Directories.Count, '] ', Directories[i]);
+
     PlaylistName := ConvertToPlaylistName(Directories[i], BaseDirectoryLength);
     Files := GetFiles(Directories[i]);
     SetLength(AudioFiles, Files.Count);
-    ProcessAudioFiles(AudioFiles, Files);
+    ProcessAudioFiles(AudioFiles, Files, Directories[i]);
 
-    AssignFile(CurrentFile, PathToCmusPlaylists + '/' + PlaylistName);
-    ReWrite(CurrentFile);
-
-    for j := 0 to Files.Count - 1 do
-    begin
-      WriteLn(CurrentFile, Directories[i] + '/' + AudioFiles[j].FileName);
+    PlaylistLines := TStringList.Create;
+    try
+      for j := 0 to Files.Count - 1 do
+        PlaylistLines.Add(Directories[i] + '/' + AudioFiles[j].FileName);
+      PlaylistLines.SaveToFile(PathToCmusPlaylists + '/' + PlaylistName);
+    finally
+      PlaylistLines.Free;
     end;
 
-    CloseFile(CurrentFile);
+    GotoXY(1, WhereY - 1);
+    ClrEol;
   end;
 
   Directories.Free;
