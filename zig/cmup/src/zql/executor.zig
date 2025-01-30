@@ -6,6 +6,7 @@ const CmupPlaylist = @import("../cmup/cmup.zig").CmupPlaylist;
 const Ast = @import("ast.zig");
 const NodeType = Ast.NodeType;
 const ASTNode = Ast.ASTNode;
+const filterByName = @import("filters/filter-by-name.zig").filterByName;
 
 pub const Executor = struct {
     playlists: std.StringHashMap(CmupPlaylist),
@@ -44,22 +45,7 @@ pub const Executor = struct {
         // TODO: refactor this later
         for (filters) |filter| {
             if (std.mem.eql(u8, filter.field, "name")) {
-                for (playlist.content) |track| {
-                    switch (filter.match_type) {
-                        .Contains => {
-                            if (std.ascii.indexOfIgnoreCase(track, filter.target) != null) {
-                                try result.append(track);
-                            }
-                        },
-                        .Is => {
-                            const name = path.getFileNameWithoutExtension(track);
-
-                            if (std.mem.eql(u8, name, filter.target)) {
-                                try result.append(track);
-                            }
-                        },
-                    }
-                }
+                try filterByName(&result, playlist, filter);
             }
         }
 
