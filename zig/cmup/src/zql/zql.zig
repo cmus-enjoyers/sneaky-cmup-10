@@ -15,8 +15,8 @@
 // - If a playlist is defined in the `require` statement but is not found by the `zmup` program,
 //   the query should also terminate with an error.
 //
-// String literals should only be created using single quotes ('').
-// The single quote character (') within a string can be escaped using the backslash (\) character.
+// String literals should only be created using double quotes ("").
+// The double quote character (") within a string can be escaped using the backslash (\) character.
 
 const std = @import("std");
 const getFileNameWithoutExtension = @import("../utils/path.zig").getFileNameWithoutExtension;

@@ -119,6 +119,7 @@ pub const Lexer = struct {
     }
 
     pub fn getTokenType(lexer: *Lexer, lexeme: []const u8) !TokenType {
+        // TODO: refactor this fn maybe
         const context = lexer.peekContext();
 
         if (context == ContextType.Comment) {
@@ -170,7 +171,7 @@ pub const Lexer = struct {
 
     pub fn shouldConsume(lexer: *Lexer, is_string: bool) bool {
         if (is_string) {
-            if (lexer.getCurrentSymbol() != '\'') {
+            if (lexer.getCurrentSymbol() != '\"') {
                 return true;
             }
 
@@ -219,7 +220,7 @@ pub const Lexer = struct {
 
         const start = lexer.position;
 
-        const is_string = lexer.input[start] == '\'';
+        const is_string = lexer.input[start] == '\"';
 
         if (is_string) {
             lexer.position += 1;
