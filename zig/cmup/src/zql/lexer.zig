@@ -12,6 +12,7 @@ pub const TokenType = enum {
     From,
     Where,
     MatchType,
+    Comment,
 
     Unknown,
 };
@@ -145,11 +146,16 @@ pub const Lexer = struct {
             return TokenType.MatchType;
         }
 
+        if (std.mem.eql(u8, lexeme, ";")) {
+            std.debug.print("found comment", .{});
+            try lexer.pushContext(ContextType.Comment);
+            return TokenType.Comment;
+        }
+
         if (lexer.peekContext()) |context| {
             return switch (context) {
                 .Require, .Where, .Add => TokenType.Identifier,
-                // TODO: implement comments
-                .Comment => TokenType.Unknown,
+                .Comment => TokenType.Comment,
             };
         }
 
@@ -242,18 +248,24 @@ pub const Lexer = struct {
         // TODO: refactor this later (or keep it because it's just simple fix)
         const lexeme = if (is_string) lexer.input[start + 1 .. lexer.position - 1] else lexer.input[start..lexer.position];
 
+        const token_type = if (is_string) TokenType.String else try lexer.getTokenType(lexeme);
+
         const token = Token{
-            .type = if (is_string) TokenType.String else try lexer.getTokenType(lexeme),
+            .type = token_type,
             .lexeme = lexeme,
             .line = lexer.line,
             .line_position = lexer.line_position,
         };
 
         if (isNewline(lexer.getCurrentSymbol())) {
+            std.debug.print("before context {}\n", .{std.json.fmt(lexer.context_stack.items, .{ .whitespace = .indent_2 })});
             _ = lexer.popContext();
+            std.debug.print("after context {}\n", .{std.json.fmt(lexer.context_stack.items, .{ .whitespace = .indent_2 })});
         }
 
-        try lexer.tokens.append(token);
+        if (token_type != TokenType.Comment) {
+            try lexer.tokens.append(token);
+        }
 
         return token;
     }
