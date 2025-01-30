@@ -25,8 +25,10 @@ pub fn hasArg(args: [][]u8, comptime arg_name: []const u8) bool {
     return false;
 }
 
-pub fn printQueriesInfo(queries_amount: usize) void {
-    std.debug.print(
+pub fn printQueriesInfo(queries_amount: usize) !void {
+    const out = std.io.getStdOut().writer();
+
+    try out.print(
         colors.green_text("\nZql" ++ colors.dim_text(": ") ++ "{} queries found \n\n"),
         .{queries_amount},
     );
@@ -79,6 +81,8 @@ pub fn main() !void {
         if (hasArg(args, "--print-everything")) {
             try cmup.printCmupPlaylists(result.playlists.items, "");
         }
+
+        try printQueriesInfo(result.zql.items.len);
 
         if (has_write) {
             for (result.zql.items) |path| {
