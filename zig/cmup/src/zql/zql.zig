@@ -18,53 +18,6 @@
 // String literals should only be created using single quotes ('').
 // The single quote character (') within a string can be escaped using the backslash (\) character.
 
-// TODO: add comments
-//
-// Example 1:
-//
-// -- silly comment
-//
-// Example 2:
-//
-// ; silly comment
-//
-// Example 3:
-//
-// // silly comment
-//
-// Example 4:
-//
-// $ silly comment
-//
-// Example 5:
-//
-// slikedollar: silly comment
-//
-//
-// TODO: hide playlist statement
-//
-// Statement that will delete `identifier` from ~/.config/cmus/playlists
-//
-// Example:
-//
-// require playlist-1
-//
-// hide playlist-1
-//
-// TODO: implement identifier renaming
-//
-// identifier renaming will be helpful because of playlists like "( ´-ω･)︻┻┳══━一~"
-//
-// Example:
-//
-// require very-long-playlist-name-that-just-makes-sense as playlist-one
-//
-// add all from playlist-one
-
-// TODO: implement filtering by metadata
-
-// TODO: implement subplaylist require
-
 const std = @import("std");
 const getFileNameWithoutExtension = @import("../utils/path.zig").getFileNameWithoutExtension;
 
