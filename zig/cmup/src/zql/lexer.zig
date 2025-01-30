@@ -119,6 +119,12 @@ pub const Lexer = struct {
     }
 
     pub fn getTokenType(lexer: *Lexer, lexeme: []const u8) !TokenType {
+        const context = lexer.peekContext();
+
+        if (context == ContextType.Comment) {
+            return TokenType.Comment;
+        }
+
         if (std.mem.eql(u8, lexeme, "require")) {
             try lexer.pushContext(ContextType.Require);
             return TokenType.Require;
@@ -152,10 +158,10 @@ pub const Lexer = struct {
             return TokenType.Comment;
         }
 
-        if (lexer.peekContext()) |context| {
-            return switch (context) {
+        if (lexer.peekContext()) |value| {
+            return switch (value) {
                 .Require, .Where, .Add => TokenType.Identifier,
-                .Comment => TokenType.Comment,
+                else => TokenType.Unknown,
             };
         }
 
@@ -258,9 +264,7 @@ pub const Lexer = struct {
         };
 
         if (isNewline(lexer.getCurrentSymbol())) {
-            std.debug.print("before context {}\n", .{std.json.fmt(lexer.context_stack.items, .{ .whitespace = .indent_2 })});
             _ = lexer.popContext();
-            std.debug.print("after context {}\n", .{std.json.fmt(lexer.context_stack.items, .{ .whitespace = .indent_2 })});
         }
 
         if (token_type != TokenType.Comment) {
