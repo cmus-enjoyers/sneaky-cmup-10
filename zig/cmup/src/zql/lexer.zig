@@ -154,7 +154,6 @@ pub const Lexer = struct {
         }
 
         if (std.mem.eql(u8, lexeme, ";")) {
-            std.debug.print("found comment", .{});
             try lexer.pushContext(ContextType.Comment);
             return TokenType.Comment;
         }
