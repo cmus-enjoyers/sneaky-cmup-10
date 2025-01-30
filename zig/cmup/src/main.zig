@@ -90,9 +90,7 @@ pub fn main() !void {
 
                 try cmup.writeCmupPlaylist(playlist, cmus_playlist_path);
             }
-        }
 
-        if (has_write) {
             try printSuccess();
         } else {
             try printInfo();
