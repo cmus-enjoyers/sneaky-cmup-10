@@ -28,7 +28,14 @@ const Executor = @import("executor.zig").Executor;
 const cmup = @import("../cmup/cmup.zig");
 const CmupPlaylist = cmup.CmupPlaylist;
 
-pub fn run(parent_allocator: std.mem.Allocator, map: std.StringHashMap(CmupPlaylist), path: []const u8) !CmupPlaylist {
+const colors = @import("../utils/colors.zig");
+
+pub fn run(
+    parent_allocator: std.mem.Allocator,
+    map: std.StringHashMap(CmupPlaylist),
+    stdout: std.fs.File.Writer,
+    path: []const u8,
+) !CmupPlaylist {
     var arena = std.heap.ArenaAllocator.init(parent_allocator);
     defer arena.deinit();
 
@@ -56,7 +63,7 @@ pub fn run(parent_allocator: std.mem.Allocator, map: std.StringHashMap(CmupPlayl
 
     const result = try executor.execute(name);
 
-    std.debug.print("Executed {s} query\n", .{name});
+    try stdout.print(colors.green_text("") ++ " {s}\n", .{name});
 
     return result;
 }

@@ -10,7 +10,7 @@ const CmupPlaylist = cmup.CmupPlaylist;
 pub fn printSuccess() !void {
     const writer = std.io.getStdOut().writer();
 
-    try writer.writeAll("Updated playlists :)\n");
+    try writer.writeAll("\nUpdated playlists :)\n");
 }
 
 pub fn printInfo() !void {
@@ -91,9 +91,11 @@ pub fn main() !void {
 
         try printQueriesInfo(result.zql.items.len);
 
+        const stdout = std.io.getStdOut().writer();
+
         if (has_write) {
             for (result.zql.items) |path| {
-                const playlist = try zql.run(allocator, map, path);
+                const playlist = try zql.run(allocator, map, stdout, path);
 
                 try cmup.writeCmupPlaylist(playlist, cmus_playlist_path);
             }
