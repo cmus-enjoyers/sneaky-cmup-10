@@ -195,9 +195,7 @@ pub fn writeCmupPlaylist(playlist: CmupPlaylist, path: []const u8) !void {
     }
 
     for (playlist.sub_playlists) |sub_playlist| {
-        if (sub_playlist.content.len >= 0) {
-            try writeCmupPlaylist(sub_playlist.*, path);
-        }
+        try writeCmupPlaylist(sub_playlist.*, path);
     }
 }
 
