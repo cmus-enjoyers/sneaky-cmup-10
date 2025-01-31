@@ -126,36 +126,52 @@ pub const Lexer = struct {
             return TokenType.Comment;
         }
 
-        if (std.mem.eql(u8, lexeme, "require")) {
-            try lexer.pushContext(ContextType.Require);
-            return TokenType.Require;
-        }
+        // PERF: hack that improves performance (not sure)
+        switch (lexeme.len) {
+            3 => {
+                if (std.mem.eql(u8, lexeme, "add")) {
+                    try lexer.pushContext(ContextType.Add);
+                    return TokenType.Add;
+                }
 
-        if (std.mem.eql(u8, lexeme, "add")) {
-            try lexer.pushContext(ContextType.Add);
-            return TokenType.Add;
-        }
-
-        if (std.mem.eql(u8, lexeme, "from")) {
-            return TokenType.From;
-        }
-
-        if (std.mem.eql(u8, lexeme, "all")) {
-            return TokenType.All;
-        }
-
-        if (std.mem.eql(u8, lexeme, "where")) {
-            try lexer.pushContext(ContextType.Where);
-            return TokenType.Where;
-        }
-
-        if (std.mem.eql(u8, lexeme, "contains") or std.mem.eql(u8, lexeme, "is")) {
-            return TokenType.MatchType;
-        }
-
-        if (std.mem.eql(u8, lexeme, ";")) {
-            try lexer.pushContext(ContextType.Comment);
-            return TokenType.Comment;
+                if (std.mem.eql(u8, lexeme, "all")) {
+                    return TokenType.All;
+                }
+            },
+            7 => {
+                if (std.mem.eql(u8, lexeme, "require")) {
+                    try lexer.pushContext(ContextType.Require);
+                    return TokenType.Require;
+                }
+            },
+            8 => {
+                if (std.mem.eql(u8, lexeme, "contains")) {
+                    return TokenType.MatchType;
+                }
+            },
+            2 => {
+                if (std.mem.eql(u8, lexeme, "is")) {
+                    return TokenType.MatchType;
+                }
+            },
+            5 => {
+                if (std.mem.eql(u8, lexeme, "where")) {
+                    try lexer.pushContext(ContextType.Where);
+                    return TokenType.Where;
+                }
+            },
+            4 => {
+                if (std.mem.eql(u8, lexeme, "from")) {
+                    return TokenType.From;
+                }
+            },
+            1 => {
+                if (std.mem.eql(u8, lexeme, ";")) {
+                    try lexer.pushContext(ContextType.Comment);
+                    return TokenType.Comment;
+                }
+            },
+            else => {},
         }
 
         if (lexer.peekContext()) |value| {
