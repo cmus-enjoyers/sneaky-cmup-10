@@ -9,9 +9,21 @@ pub const NodeType = enum {
     AddStatement,
 };
 
-pub const RequireData = struct {
-    sources: [][]const u8,
-};
+pub fn ASTData(comptime data_type: type) type {
+    return struct {
+        data: data_type,
+        token: lxer.Token,
+
+        const Self = @This();
+
+        pub fn init(data: data_type, token: lxer.Token) Self {
+            return Self{
+                .data = data,
+                .token = token,
+            };
+        }
+    };
+}
 
 // NOTE: move filtering things into separate module cuz they will grow
 pub const MatchType = enum {
@@ -31,6 +43,10 @@ pub const MatchType = enum {
     }
 };
 
+pub const RequireData = struct {
+    sources: []ASTData([]const u8),
+};
+
 pub const Filter = struct {
     field: []const u8,
     match_type: MatchType,
@@ -38,8 +54,8 @@ pub const Filter = struct {
 };
 
 pub const AddData = struct {
-    source: []const u8,
-    filters: ?[]Filter,
+    source: []ASTData([]const u8),
+    filters: ?[]ASTData(Filter),
 };
 
 const NodeData = union(NodeType) {
@@ -50,6 +66,7 @@ const NodeData = union(NodeType) {
 pub const ASTNode = struct {
     type: NodeType,
     data: NodeData,
+    token: lxer.Token,
 };
 
 pub const Parser = struct {
@@ -191,14 +208,20 @@ pub const Parser = struct {
         while (parser.position < parser.lexer.tokens.items.len) : ({
             parser.move();
         }) {
+            const stderr = std.io.getStdErr();
             const item = parser.lexer.tokens.items[parser.position];
 
             try switch (item.type) {
                 .Require => parser.parseRequire(item),
                 .Add => parser.parseAdd(item),
                 .Unknown => {
-                    err.printSimple("UnknownSyntax", item.line);
-                    return error.UnknownSyntax;
+                    item.printErr(
+                        parser.allocator,
+                        stderr,
+                        err.Error.SyntaxError,
+                        parser.lexer.input,
+                    );
+                    return error.SyntaxError;
                 },
                 else => {},
             };

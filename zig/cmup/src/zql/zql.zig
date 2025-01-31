@@ -57,13 +57,15 @@ pub fn run(
 
     try parser.parse();
 
-    var executor = Executor.init(allocator, map, parser.nodes.items);
+    std.debug.print("{}\n", .{std.json.fmt(parser.nodes.items, .{ .whitespace = .indent_2 })});
 
-    const name = getFileNameWithoutExtension(path);
-
-    const result = try executor.execute(name);
-
-    try stdout.print(colors.green_text("") ++ " {s}\n", .{name});
-
-    return result;
+    // var executor = Executor.init(allocator, map, parser.nodes.items);
+    //
+    // const name = getFileNameWithoutExtension(path);
+    //
+    // const result = try executor.execute(name);
+    //
+    // try stdout.print(colors.green_text("") ++ " {s}\n", .{name});
+    //
+    // return result;
 }
