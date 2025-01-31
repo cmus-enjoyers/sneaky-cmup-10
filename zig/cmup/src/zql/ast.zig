@@ -55,7 +55,7 @@ pub const Filter = struct {
     target: lxer.Token,
 };
 
-const ASTFilter = ASTData(Filter);
+pub const ASTFilter = ASTData(Filter);
 
 pub const AddData = struct {
     source: lxer.Token,

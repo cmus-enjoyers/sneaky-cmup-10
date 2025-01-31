@@ -57,25 +57,13 @@ pub fn run(
 
     try parser.parse();
 
-    std.debug.print("{}\n", .{std.json.fmt(parser.nodes.items, .{ .whitespace = .indent_2 })});
+    var executor = Executor.init(allocator, map, parser.nodes.items, std.io.getStdErr(), query);
 
-    _ = stdout;
-    _ = map;
+    const name = getFileNameWithoutExtension(path);
 
-    // var executor = Executor.init(allocator, map, parser.nodes.items);
-    //
-    // const name = getFileNameWithoutExtension(path);
-    //
-    // const result = try executor.execute(name);
-    //
-    // try stdout.print(colors.green_text("") ++ " {s}\n", .{name});
-    //
-    // return result;
+    const result = try executor.execute(name);
 
-    return CmupPlaylist{
-        .name = "popipo",
-        .content = &[_][]const u8{},
-        .path = "",
-        .sub_playlists = &[_]*CmupPlaylist{},
-    };
+    try stdout.print(colors.green_text("") ++ " {s}\n", .{name});
+
+    return result;
 }

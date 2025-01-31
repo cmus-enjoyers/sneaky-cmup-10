@@ -4,12 +4,14 @@ const colors = @import("../utils/colors.zig");
 pub const Error = enum {
     UnterminatedString,
     SyntaxError,
+    PlaylistNotFound,
 };
 
 pub fn getErrorMessage(err: Error) []const u8 {
     return switch (err) {
         .UnterminatedString => "Unterminated string",
         .SyntaxError => "Syntax error",
+        .PlaylistNotFound => "Playlist Not Found",
     };
 }
 
