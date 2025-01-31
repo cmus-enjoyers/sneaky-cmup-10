@@ -95,7 +95,11 @@ pub fn main() !void {
 
         if (has_write) {
             for (result.zql.items) |path| {
-                const playlist = try zql.run(allocator, map, stdout, path);
+                const playlist = zql.run(allocator, map, path) catch {
+                    std.process.exit(1);
+                };
+
+                try stdout.print(colors.green_text("") ++ " {s}\n", .{playlist.name});
 
                 try cmup.writeCmupPlaylist(playlist, cmus_playlist_path);
             }

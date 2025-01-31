@@ -33,7 +33,6 @@ const colors = @import("../utils/colors.zig");
 pub fn run(
     parent_allocator: std.mem.Allocator,
     map: std.StringHashMap(CmupPlaylist),
-    stdout: std.fs.File.Writer,
     path: []const u8,
 ) !CmupPlaylist {
     var arena = std.heap.ArenaAllocator.init(parent_allocator);
@@ -62,8 +61,6 @@ pub fn run(
     const name = getFileNameWithoutExtension(path);
 
     const result = try executor.execute(name);
-
-    try stdout.print(colors.green_text("") ++ " {s}\n", .{name});
 
     return result;
 }
