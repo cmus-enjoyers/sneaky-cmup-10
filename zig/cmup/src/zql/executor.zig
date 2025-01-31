@@ -4,6 +4,7 @@ const std = @import("std");
 const path = @import("../utils/path.zig");
 const CmupPlaylist = @import("../cmup/cmup.zig").CmupPlaylist;
 const Ast = @import("ast.zig");
+const Token = @import("lexer.zig").Token;
 const NodeType = Ast.NodeType;
 const ASTNode = Ast.ASTNode;
 const filterByName = @import("filters/filter-by-name.zig").filterByName;
@@ -38,6 +39,15 @@ pub const Executor = struct {
         executor.identifiers.deinit();
     }
 
+    pub fn printErr(executor: *Executor, token: Token, er: err.Error) !void {
+        try token.printErr(
+            executor.allocator,
+            executor.stderr,
+            er,
+            executor.input,
+        );
+    }
+
     pub fn executeRequire(executor: *Executor, data: Ast.RequireData) !void {
         for (data.sources) |source| {
             const key = source.lexeme;
@@ -48,12 +58,7 @@ pub const Executor = struct {
                 continue;
             }
 
-            try source.printErr(
-                executor.allocator,
-                executor.stderr,
-                err.Error.PlaylistNotFound,
-                executor.input,
-            );
+            try executor.printErr(source, err.Error.PlaylistNotFound);
             return error.NoPlaylist;
         }
     }
@@ -85,6 +90,7 @@ pub const Executor = struct {
             return;
         }
 
+        try executor.printErr(data.source, err.Error.ReferenceError);
         return error.ReferenceError;
     }
 

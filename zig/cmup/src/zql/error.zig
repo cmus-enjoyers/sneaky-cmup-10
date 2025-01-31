@@ -5,6 +5,7 @@ pub const Error = enum {
     UnterminatedString,
     SyntaxError,
     PlaylistNotFound,
+    ReferenceError,
 };
 
 pub fn getErrorMessage(err: Error) []const u8 {
@@ -12,6 +13,7 @@ pub fn getErrorMessage(err: Error) []const u8 {
         .UnterminatedString => "Unterminated string",
         .SyntaxError => "Syntax error",
         .PlaylistNotFound => "Playlist Not Found",
+        .ReferenceError => "Reference Error",
     };
 }
 
