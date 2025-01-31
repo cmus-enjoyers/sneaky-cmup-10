@@ -44,18 +44,22 @@ pub const MatchType = enum {
 };
 
 pub const RequireData = struct {
-    sources: []ASTData([]const u8),
+    sources: []lxer.Token,
 };
+
+const ASTMatchType = ASTData(MatchType);
 
 pub const Filter = struct {
-    field: []const u8,
-    match_type: MatchType,
-    target: []const u8,
+    field: lxer.Token,
+    match_type: ASTMatchType,
+    target: lxer.Token,
 };
 
+const ASTFilter = ASTData(Filter);
+
 pub const AddData = struct {
-    source: []ASTData([]const u8),
-    filters: ?[]ASTData(Filter),
+    source: lxer.Token,
+    filters: ?[]ASTFilter,
 };
 
 const NodeData = union(NodeType) {
@@ -111,7 +115,7 @@ pub const Parser = struct {
 
     pub fn parseRequire(parser: *Parser, token: lxer.Token) !void {
         // TODO: fix memory leak here later
-        var sources = std.ArrayList([]const u8).init(parser.allocator);
+        var sources = std.ArrayList(lxer.Token).init(parser.allocator);
 
         while (parser.peekNextToken()) |value| {
             if (value.type != .Identifier) {
@@ -120,7 +124,7 @@ pub const Parser = struct {
 
             parser.move();
 
-            try sources.append(value.lexeme);
+            try sources.append(value);
         }
 
         if (sources.items.len == 0) {
@@ -136,6 +140,7 @@ pub const Parser = struct {
                     .sources = sources.items,
                 },
             },
+            .token = token,
         });
     }
 
@@ -155,7 +160,7 @@ pub const Parser = struct {
         return token;
     }
 
-    pub fn parseFilters(parser: *Parser) !?[]Filter {
+    pub fn parseFilters(parser: *Parser) !?[]ASTFilter {
         const nextToken = parser.peekNextToken();
 
         if (nextToken) |value| {
@@ -166,7 +171,7 @@ pub const Parser = struct {
             parser.move();
 
             // TODO: fix memory leaks here
-            var filters = std.ArrayList(Filter).init(parser.allocator);
+            var filters = std.ArrayList(ASTFilter).init(parser.allocator);
 
             const name = try parser.expectTokenType(value, .Identifier);
             const match_type = try parser.expectTokenType(name, .MatchType);
@@ -174,10 +179,13 @@ pub const Parser = struct {
 
             // TODO: impleemnt multiple filters parsing in lexer
 
-            try filters.append(Filter{
-                .field = name.lexeme,
-                .match_type = try MatchType.toMatchType(match_type.lexeme),
-                .target = target.lexeme,
+            try filters.append(ASTFilter{
+                .data = .{
+                    .field = name,
+                    .match_type = ASTMatchType.init(try MatchType.toMatchType(match_type.lexeme), match_type),
+                    .target = target,
+                },
+                .token = target,
             });
 
             return filters.items;
@@ -195,10 +203,11 @@ pub const Parser = struct {
 
         try parser.nodes.append(ASTNode{
             .type = .AddStatement,
+            .token = token,
             .data = .{
                 .AddStatement = .{
+                    .source = source,
                     .filters = filters,
-                    .source = source.lexeme,
                 },
             },
         });
@@ -215,7 +224,7 @@ pub const Parser = struct {
                 .Require => parser.parseRequire(item),
                 .Add => parser.parseAdd(item),
                 .Unknown => {
-                    item.printErr(
+                    try item.printErr(
                         parser.allocator,
                         stderr,
                         err.Error.SyntaxError,

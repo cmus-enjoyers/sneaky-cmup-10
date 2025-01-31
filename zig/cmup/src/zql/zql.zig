@@ -59,6 +59,9 @@ pub fn run(
 
     std.debug.print("{}\n", .{std.json.fmt(parser.nodes.items, .{ .whitespace = .indent_2 })});
 
+    _ = stdout;
+    _ = map;
+
     // var executor = Executor.init(allocator, map, parser.nodes.items);
     //
     // const name = getFileNameWithoutExtension(path);
@@ -68,4 +71,11 @@ pub fn run(
     // try stdout.print(colors.green_text("") ++ " {s}\n", .{name});
     //
     // return result;
+
+    return CmupPlaylist{
+        .name = "popipo",
+        .content = &[_][]const u8{},
+        .path = "",
+        .sub_playlists = &[_]*CmupPlaylist{},
+    };
 }

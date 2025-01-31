@@ -17,10 +17,6 @@ const error_prefix = colors.red_text("Zql Error") ++ colors.dim_text(" => ");
 
 // TODO: implement hints
 
-pub fn printSimple(description: []const u8, line: usize) void {
-    std.debug.print("\n" ++ error_prefix ++ "{s} at line {}\n", .{ description, line });
-}
-
 pub fn printToken(
     allocator: std.mem.Allocator,
     out: std.fs.File,
