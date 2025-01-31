@@ -4,22 +4,34 @@ const std = @import("std");
 const path = @import("../utils/path.zig");
 const CmupPlaylist = @import("../cmup/cmup.zig").CmupPlaylist;
 const Ast = @import("ast.zig");
+const Token = @import("lexer.zig").Token;
 const NodeType = Ast.NodeType;
 const ASTNode = Ast.ASTNode;
 const filterByName = @import("filters/filter-by-name.zig").filterByName;
+const err = @import("error.zig");
 
 pub const Executor = struct {
     playlists: std.StringHashMap(CmupPlaylist),
     ast: []ASTNode,
     allocator: std.mem.Allocator,
     identifiers: std.StringHashMap(CmupPlaylist),
+    stderr: std.fs.File,
+    input: []const u8,
 
-    pub fn init(allocator: std.mem.Allocator, playlists: std.StringHashMap(CmupPlaylist), ast: []ASTNode) Executor {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        playlists: std.StringHashMap(CmupPlaylist),
+        ast: []ASTNode,
+        stderr: std.fs.File,
+        input: []const u8,
+    ) Executor {
         return Executor{
             .playlists = playlists,
             .allocator = allocator,
             .identifiers = std.StringHashMap(CmupPlaylist).init(allocator),
             .ast = ast,
+            .stderr = stderr,
+            .input = input,
         };
     }
 
@@ -27,24 +39,36 @@ pub const Executor = struct {
         executor.identifiers.deinit();
     }
 
+    pub fn printErr(executor: *Executor, token: Token, er: err.Error) !void {
+        try token.printErr(
+            executor.allocator,
+            executor.stderr,
+            er,
+            executor.input,
+        );
+    }
+
     pub fn executeRequire(executor: *Executor, data: Ast.RequireData) !void {
         for (data.sources) |source| {
-            if (executor.playlists.get(source)) |playlist| {
-                try executor.identifiers.put(source, playlist);
+            const key = source.lexeme;
+
+            if (executor.playlists.get(key)) |playlist| {
+                try executor.identifiers.put(key, playlist);
 
                 continue;
             }
 
+            try executor.printErr(source, err.Error.PlaylistNotFound);
             return error.NoPlaylist;
         }
     }
 
-    pub fn filterPlaylist(executor: *Executor, filters: []Ast.Filter, playlist: CmupPlaylist) !std.ArrayList([]const u8) {
+    pub fn filterPlaylist(executor: *Executor, filters: []Ast.ASTFilter, playlist: CmupPlaylist) !std.ArrayList([]const u8) {
         var result = std.ArrayList([]const u8).init(executor.allocator);
 
         for (filters) |filter| {
-            if (std.mem.eql(u8, filter.field, "name")) {
-                try filterByName(&result, playlist, filter);
+            if (std.mem.eql(u8, filter.data.field.lexeme, "name")) {
+                try filterByName(&result, playlist, filter.data);
             }
         }
 
@@ -52,7 +76,7 @@ pub const Executor = struct {
     }
 
     pub fn executeAdd(executor: *Executor, result: *std.ArrayList([]const u8), data: Ast.AddData) !void {
-        if (executor.identifiers.get(data.source)) |value| {
+        if (executor.identifiers.get(data.source.lexeme)) |value| {
             if (data.filters) |filters| {
                 const tracks = try executor.filterPlaylist(filters, value);
 
@@ -66,6 +90,7 @@ pub const Executor = struct {
             return;
         }
 
+        try executor.printErr(data.source, err.Error.ReferenceError);
         return error.ReferenceError;
     }
 

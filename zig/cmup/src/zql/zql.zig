@@ -15,8 +15,8 @@
 // - If a playlist is defined in the `require` statement but is not found by the `zmup` program,
 //   the query should also terminate with an error.
 //
-// String literals should only be created using single quotes ('').
-// The single quote character (') within a string can be escaped using the backslash (\) character.
+// String literals should only be created using double quotes ("").
+// The double quote character (") within a string can be escaped using the backslash (\) character.
 
 const std = @import("std");
 const getFileNameWithoutExtension = @import("../utils/path.zig").getFileNameWithoutExtension;
@@ -33,7 +33,6 @@ const colors = @import("../utils/colors.zig");
 pub fn run(
     parent_allocator: std.mem.Allocator,
     map: std.StringHashMap(CmupPlaylist),
-    stdout: std.fs.File.Writer,
     path: []const u8,
 ) !CmupPlaylist {
     var arena = std.heap.ArenaAllocator.init(parent_allocator);
@@ -57,13 +56,11 @@ pub fn run(
 
     try parser.parse();
 
-    var executor = Executor.init(allocator, map, parser.nodes.items);
+    var executor = Executor.init(allocator, map, parser.nodes.items, std.io.getStdErr(), query);
 
     const name = getFileNameWithoutExtension(path);
 
     const result = try executor.execute(name);
-
-    try stdout.print(colors.green_text("") ++ " {s}\n", .{name});
 
     return result;
 }

@@ -12,6 +12,7 @@ pub const TokenType = enum {
     From,
     Where,
     MatchType,
+    Comment,
 
     Unknown,
 };
@@ -118,6 +119,13 @@ pub const Lexer = struct {
     }
 
     pub fn getTokenType(lexer: *Lexer, lexeme: []const u8) !TokenType {
+        // TODO: refactor this fn maybe
+        const context = lexer.peekContext();
+
+        if (context == ContextType.Comment) {
+            return TokenType.Comment;
+        }
+
         if (std.mem.eql(u8, lexeme, "require")) {
             try lexer.pushContext(ContextType.Require);
             return TokenType.Require;
@@ -145,11 +153,15 @@ pub const Lexer = struct {
             return TokenType.MatchType;
         }
 
-        if (lexer.peekContext()) |context| {
-            return switch (context) {
+        if (std.mem.eql(u8, lexeme, ";")) {
+            try lexer.pushContext(ContextType.Comment);
+            return TokenType.Comment;
+        }
+
+        if (lexer.peekContext()) |value| {
+            return switch (value) {
                 .Require, .Where, .Add => TokenType.Identifier,
-                // TODO: implement comments
-                .Comment => TokenType.Unknown,
+                else => TokenType.Unknown,
             };
         }
 
@@ -158,7 +170,7 @@ pub const Lexer = struct {
 
     pub fn shouldConsume(lexer: *Lexer, is_string: bool) bool {
         if (is_string) {
-            if (lexer.getCurrentSymbol() != '\'') {
+            if (lexer.getCurrentSymbol() != '\"') {
                 return true;
             }
 
@@ -207,7 +219,7 @@ pub const Lexer = struct {
 
         const start = lexer.position;
 
-        const is_string = lexer.input[start] == '\'';
+        const is_string = lexer.input[start] == '\"';
 
         if (is_string) {
             lexer.position += 1;
@@ -242,8 +254,10 @@ pub const Lexer = struct {
         // TODO: refactor this later (or keep it because it's just simple fix)
         const lexeme = if (is_string) lexer.input[start + 1 .. lexer.position - 1] else lexer.input[start..lexer.position];
 
+        const token_type = if (is_string) TokenType.String else try lexer.getTokenType(lexeme);
+
         const token = Token{
-            .type = if (is_string) TokenType.String else try lexer.getTokenType(lexeme),
+            .type = token_type,
             .lexeme = lexeme,
             .line = lexer.line,
             .line_position = lexer.line_position,
@@ -253,7 +267,9 @@ pub const Lexer = struct {
             _ = lexer.popContext();
         }
 
-        try lexer.tokens.append(token);
+        if (token_type != TokenType.Comment) {
+            try lexer.tokens.append(token);
+        }
 
         return token;
     }
