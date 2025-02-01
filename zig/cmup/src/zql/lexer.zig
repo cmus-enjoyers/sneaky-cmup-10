@@ -63,6 +63,7 @@ const ContextType = enum {
     Add,
     Where,
     Comment,
+    Hide,
 };
 
 pub const Lexer = struct {
@@ -167,6 +168,7 @@ pub const Lexer = struct {
                 }
 
                 if (std.mem.eql(u8, lexeme, "hide")) {
+                    try lexer.pushContext(ContextType.Hide);
                     return TokenType.Hide;
                 }
             },

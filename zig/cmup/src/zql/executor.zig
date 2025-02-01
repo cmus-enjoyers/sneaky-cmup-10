@@ -94,6 +94,12 @@ pub const Executor = struct {
         return error.ReferenceError;
     }
 
+    pub fn executeHide(executor: *Executor, data: Ast.HideData) !void {
+        _ = executor;
+        _ = data;
+        std.debug.print("hide statement\n", .{});
+    }
+
     pub fn execute(executor: *Executor, name: []const u8) !CmupPlaylist {
         var result = std.ArrayList([]const u8).init(executor.allocator);
 
@@ -101,6 +107,7 @@ pub const Executor = struct {
             try switch (node.data) {
                 NodeType.RequireStatement => |data| executor.executeRequire(data),
                 NodeType.AddStatement => |data| executor.executeAdd(&result, data),
+                NodeType.HideStatement => |data| executor.executeHide(data),
             };
         }
 

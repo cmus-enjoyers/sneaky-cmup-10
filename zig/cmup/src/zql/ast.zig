@@ -7,6 +7,7 @@ const err = @import("error.zig");
 pub const NodeType = enum {
     RequireStatement,
     AddStatement,
+    HideStatement,
 };
 
 pub fn ASTData(comptime data_type: type) type {
@@ -62,9 +63,14 @@ pub const AddData = struct {
     filters: ?[]ASTFilter,
 };
 
+pub const HideData = struct {
+    playlist: lxer.Token,
+};
+
 const NodeData = union(NodeType) {
     RequireStatement: RequireData,
     AddStatement: AddData,
+    HideStatement: HideData,
 };
 
 pub const ASTNode = struct {
@@ -213,6 +219,16 @@ pub const Parser = struct {
         });
     }
 
+    pub fn parseHide(parser: *Parser, token: lxer.Token) !void {
+        const playlist = try parser.expectTokenType(token, .Identifier);
+
+        try parser.nodes.append(ASTNode{
+            .type = .HideStatement,
+            .token = token,
+            .data = .{ .HideStatement = .{ .playlist = playlist } },
+        });
+    }
+
     pub fn parse(parser: *Parser) !void {
         while (parser.position < parser.lexer.tokens.items.len) : ({
             parser.move();
@@ -223,6 +239,7 @@ pub const Parser = struct {
             try switch (item.type) {
                 .Require => parser.parseRequire(item),
                 .Add => parser.parseAdd(item),
+                .Hide => parser.parseHide(item),
                 .Unknown => {
                     try item.printErr(
                         parser.allocator,
