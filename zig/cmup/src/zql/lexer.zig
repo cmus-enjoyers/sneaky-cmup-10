@@ -13,6 +13,7 @@ pub const TokenType = enum {
     Where,
     MatchType,
     Comment,
+    Hide,
 
     Unknown,
 };
@@ -163,6 +164,10 @@ pub const Lexer = struct {
             4 => {
                 if (std.mem.eql(u8, lexeme, "from")) {
                     return TokenType.From;
+                }
+
+                if (std.mem.eql(u8, lexeme, "hide")) {
+                    return TokenType.Hide;
                 }
             },
             1 => {

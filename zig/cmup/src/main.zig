@@ -28,11 +28,9 @@ pub fn hasArg(args: [][]u8, comptime arg_name: []const u8) bool {
     return false;
 }
 
-pub fn printQueriesInfo(queries_amount: usize) !void {
-    const out = std.io.getStdOut().writer();
-
+pub fn printQueriesInfo(out: std.fs.File.Writer, queries_amount: usize) !void {
     try out.print(
-        colors.green_text("\nZql" ++ colors.dim_text(": ") ++ "{} queries found \n\n"),
+        colors.green_text("Zql" ++ colors.dim_text(": ") ++ "{} queries found \n\n"),
         .{queries_amount},
     );
 }
@@ -89,9 +87,9 @@ pub fn main() !void {
             try clear(cmus_playlist_path);
         }
 
-        try printQueriesInfo(result.zql.items.len);
-
         const stdout = std.io.getStdOut().writer();
+
+        try printQueriesInfo(stdout, result.zql.items.len);
 
         if (has_write) {
             for (result.zql.items) |path| {
