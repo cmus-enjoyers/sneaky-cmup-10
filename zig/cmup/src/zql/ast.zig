@@ -119,7 +119,7 @@ pub const Parser = struct {
         return parser.lexer.tokens.items[parser.position + 1];
     }
 
-    pub fn parseRequire(parser: *Parser, token: lxer.Token) !void {
+    pub fn parseRequire(parser: *Parser, token: lxer.Token) !ASTNode {
         // TODO: fix memory leak here later
         var sources = std.ArrayList(lxer.Token).init(parser.allocator);
 
@@ -139,7 +139,7 @@ pub const Parser = struct {
             return error.SyntaxError;
         }
 
-        try parser.nodes.append(ASTNode{
+        return ASTNode{
             .type = .RequireStatement,
             .data = .{
                 .RequireStatement = .{
@@ -147,7 +147,7 @@ pub const Parser = struct {
                 },
             },
             .token = token,
-        });
+        };
     }
 
     pub fn expectTokenType(parser: *Parser, current_token: lxer.Token, expectedType: lxer.TokenType) !lxer.Token {
@@ -200,14 +200,14 @@ pub const Parser = struct {
         return null;
     }
 
-    pub fn parseAdd(parser: *Parser, token: lxer.Token) !void {
+    pub fn parseAdd(parser: *Parser, token: lxer.Token) !ASTNode {
         const next = try parser.expectTokenType(token, .All);
         const from = try parser.expectTokenType(next, .From);
         const source = try parser.expectTokenType(from, .Identifier);
 
         const filters = try parser.parseFilters();
 
-        try parser.nodes.append(ASTNode{
+        return ASTNode{
             .type = .AddStatement,
             .token = token,
             .data = .{
@@ -216,17 +216,17 @@ pub const Parser = struct {
                     .filters = filters,
                 },
             },
-        });
+        };
     }
 
-    pub fn parseHide(parser: *Parser, token: lxer.Token) !void {
+    pub fn parseHide(parser: *Parser, token: lxer.Token) !ASTNode {
         const playlist = try parser.expectTokenType(token, .Identifier);
 
-        try parser.nodes.append(ASTNode{
+        return ASTNode{
             .type = .HideStatement,
             .token = token,
             .data = .{ .HideStatement = .{ .playlist = playlist } },
-        });
+        };
     }
 
     pub fn parse(parser: *Parser) !void {
@@ -236,7 +236,7 @@ pub const Parser = struct {
             const stderr = std.io.getStdErr();
             const item = parser.lexer.tokens.items[parser.position];
 
-            try switch (item.type) {
+            const node = try switch (item.type) {
                 .Require => parser.parseRequire(item),
                 .Add => parser.parseAdd(item),
                 .Hide => parser.parseHide(item),
@@ -249,8 +249,10 @@ pub const Parser = struct {
                     );
                     return error.SyntaxError;
                 },
-                else => {},
+                else => continue,
             };
+
+            try parser.nodes.append(node);
         }
     }
 };
