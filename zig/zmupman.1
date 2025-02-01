@@ -1,0 +1,24 @@
+.TH ZMUP 1
+.SH NAME
+zmup \- create playlists for cmus
+.SH SYNOPSIS
+.B zmup 
+.RI [ OPTION .\|.\|.]
+.SH DESCRIPTION
+.B zmup 
+generates cmus playlists based on the directory structure and zql files.
+.br 
+If the directory name ends with a $ sign,
+the program concatenates its parent directory with the current directory name in the format 
+.I parentdir-dir
+\&.Otherwise, it uses the directory name as is.
+.SH OPTIONS
+.TP
+.BR \-\-print\-everything
+ prints playlist names to stdout. Mostly used for debugging purposes
+.TP
+.BR clear
+ deletes cmus playlists (~/.config/cmus/playlists/*)
+.TP
+.BR \-\-write
+ creates cmus playlists. Writes ~/.config/cmus/playlists/ with playlist names.
