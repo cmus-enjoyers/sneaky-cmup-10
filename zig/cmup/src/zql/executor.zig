@@ -10,6 +10,23 @@ const ASTNode = Ast.ASTNode;
 const filterByName = @import("filters/filter-by-name.zig").filterByName;
 const err = @import("error.zig");
 
+pub const SideEffectType = enum {
+    Remove,
+};
+
+pub const RemoveEffect = struct { playlist: []const u8 };
+
+pub const SideEffect = union(SideEffectType) { Remove: RemoveEffect };
+
+pub const ExecutorResult = struct {
+    playlist: CmupPlaylist,
+    side_effects: std.ArrayList(SideEffect),
+
+    pub fn deinit(result: ExecutorResult) void {
+        result.side_effects.deinit();
+    }
+};
+
 pub const Executor = struct {
     playlists: std.StringHashMap(CmupPlaylist),
     ast: []ASTNode,
@@ -37,6 +54,7 @@ pub const Executor = struct {
 
     pub fn deinit(executor: *Executor) void {
         executor.identifiers.deinit();
+        executor.side_effects.deinit();
     }
 
     pub fn printErr(executor: *Executor, token: Token, er: err.Error) !void {
@@ -94,28 +112,32 @@ pub const Executor = struct {
         return error.ReferenceError;
     }
 
-    pub fn executeHide(executor: *Executor, data: Ast.HideData) !void {
-        _ = executor;
-        _ = data;
-        std.debug.print("hide statement\n", .{});
+    pub fn executeHide(side_effects: *std.ArrayList(SideEffect), data: Ast.HideData) !void {
+        side_effects.append(SideEffect{
+            .Remove = .{ .playlist = data.playlist },
+        });
     }
 
-    pub fn execute(executor: *Executor, name: []const u8) !CmupPlaylist {
+    pub fn execute(executor: *Executor, name: []const u8) !ExecutorResult {
         var result = std.ArrayList([]const u8).init(executor.allocator);
+        var side_effects = std.ArrayList(SideEffect).init(executor.allocator);
 
         for (executor.ast) |node| {
             try switch (node.data) {
                 NodeType.RequireStatement => |data| executor.executeRequire(data),
                 NodeType.AddStatement => |data| executor.executeAdd(&result, data),
-                NodeType.HideStatement => |data| executor.executeHide(data),
+                NodeType.HideStatement => |data| executor.executeHide(&side_effects, data),
             };
         }
 
-        return CmupPlaylist{
-            .name = name,
-            .content = result.items,
-            .path = "",
-            .sub_playlists = &[_]*CmupPlaylist{},
+        return ExecutorResult{
+            .side_effects = side_effects,
+            .playlist = CmupPlaylist{
+                .name = name,
+                .content = result.items,
+                .path = "",
+                .sub_playlists = &[_]*CmupPlaylist{},
+            },
         };
     }
 };

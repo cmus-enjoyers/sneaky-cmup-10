@@ -43,6 +43,30 @@ pub fn putCmupPlaylist(map: *std.StringHashMap(CmupPlaylist), playlist: CmupPlay
     }
 }
 
+pub fn executeZqls(
+    allocator: std.mem.Allocator,
+    zql_paths: []const u8,
+    map: std.StringHashMap(CmupPlaylist),
+    playlist_path: []const u8,
+    stdout: std.fs.File.Writer,
+) !void {
+    for (zql_paths) |path| {
+        const result = zql.run(allocator, map, path, playlist_path) catch {
+            std.process.exit(1);
+        };
+
+        try stdout.print(colors.green_text("") ++ " {s}\n", .{result.name});
+
+        try cmup.writeCmupPlaylist(result.playlist, playlist_path);
+
+        // for (result.side_effects.items) |side_effect| {
+        //     switch (side_effect)  {
+        //         .Remove => |data| std.fs.deleteFileAbsolute()
+        //     }
+        // }
+    }
+}
+
 pub fn cmupPlaylistsToHashMap(
     allocator: std.mem.Allocator,
     playlists: []CmupPlaylist,
@@ -92,16 +116,7 @@ pub fn main() !void {
         try printQueriesInfo(stdout, result.zql.items.len);
 
         if (has_write) {
-            for (result.zql.items) |path| {
-                const playlist = zql.run(allocator, map, path) catch {
-                    std.process.exit(1);
-                };
-
-                try stdout.print(colors.green_text("") ++ " {s}\n", .{playlist.name});
-
-                try cmup.writeCmupPlaylist(playlist, cmus_playlist_path);
-            }
-
+            try executeZqls(allocator, result.zql.items, map, cmus_playlist_path, stdout);
             try printSuccess();
         } else {
             try printInfo();
