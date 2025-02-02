@@ -112,9 +112,14 @@ pub const Executor = struct {
         return error.ReferenceError;
     }
 
-    pub fn executeHide(side_effects: *std.ArrayList(SideEffect), data: Ast.HideData) !void {
-        side_effects.append(SideEffect{
-            .Remove = .{ .playlist = data.playlist },
+    pub fn executeHide(executor: *Executor, side_effects: *std.ArrayList(SideEffect), data: Ast.HideData) !void {
+        const playlist: CmupPlaylist = executor.identifiers.get(data.playlist.lexeme) orelse {
+            try executor.printErr(data.playlist, err.Error.ReferenceError);
+            return error.ReferenceError;
+        };
+
+        try side_effects.append(SideEffect{
+            .Remove = .{ .playlist = playlist.name },
         });
     }
 

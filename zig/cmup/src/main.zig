@@ -43,27 +43,38 @@ pub fn putCmupPlaylist(map: *std.StringHashMap(CmupPlaylist), playlist: CmupPlay
     }
 }
 
+pub fn removePlaylist(
+    allocator: std.mem.Allocator,
+    playlists_path: []const u8,
+    path: []const u8,
+) !void {
+    const playlist_path = try std.fs.path.join(allocator, &[_][]const u8{ playlists_path, path });
+    defer allocator.free(playlist_path);
+
+    try std.fs.deleteFileAbsolute(playlist_path);
+}
+
 pub fn executeZqls(
     allocator: std.mem.Allocator,
-    zql_paths: []const u8,
+    zql_paths: [][]const u8,
     map: std.StringHashMap(CmupPlaylist),
     playlist_path: []const u8,
     stdout: std.fs.File.Writer,
 ) !void {
     for (zql_paths) |path| {
-        const result = zql.run(allocator, map, path, playlist_path) catch {
+        const result = zql.run(allocator, map, path) catch {
             std.process.exit(1);
         };
 
-        try stdout.print(colors.green_text("") ++ " {s}\n", .{result.name});
+        try stdout.print(colors.green_text("") ++ " {s}\n", .{result.playlist.name});
 
         try cmup.writeCmupPlaylist(result.playlist, playlist_path);
 
-        // for (result.side_effects.items) |side_effect| {
-        //     switch (side_effect)  {
-        //         .Remove => |data| std.fs.deleteFileAbsolute()
-        //     }
-        // }
+        for (result.side_effects.items) |side_effect| {
+            switch (side_effect) {
+                .Remove => |data| try removePlaylist(allocator, playlist_path, data.playlist),
+            }
+        }
     }
 }
 

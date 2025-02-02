@@ -23,8 +23,8 @@ const getFileNameWithoutExtension = @import("../utils/path.zig").getFileNameWith
 
 const Lexer = @import("lexer.zig").Lexer;
 const Parser = @import("ast.zig").Parser;
-const executor = @import("executor.zig");
-const Executor = executor.Executor;
+const executr = @import("executor.zig");
+const Executor = executr.Executor;
 
 const cmup = @import("../cmup/cmup.zig");
 const CmupPlaylist = cmup.CmupPlaylist;
@@ -35,7 +35,7 @@ pub fn run(
     parent_allocator: std.mem.Allocator,
     map: std.StringHashMap(CmupPlaylist),
     path: []const u8,
-) !executor.ExecutorResult {
+) !executr.ExecutorResult {
     var arena = std.heap.ArenaAllocator.init(parent_allocator);
     defer arena.deinit();
 
