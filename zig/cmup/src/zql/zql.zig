@@ -29,6 +29,8 @@ const Executor = executr.Executor;
 const cmup = @import("../cmup/cmup.zig");
 const CmupPlaylist = cmup.CmupPlaylist;
 
+pub const SideEffect = executr.SideEffect;
+
 const colors = @import("../utils/colors.zig");
 
 pub fn run(
