@@ -28,12 +28,12 @@ pub fn hasArg(args: [][]u8, comptime arg_name: []const u8) bool {
     return false;
 }
 
-pub fn printQueriesInfo(queries_amount: usize) !void {
-    const out = std.io.getStdOut().writer();
+pub fn printQueriesInfo(out: std.fs.File.Writer, queries_amount: usize, is_pure: bool) !void {
+    const pure_text = if (is_pure) " (Pure)" else "";
 
     try out.print(
-        colors.green_text("\nZql" ++ colors.dim_text(": ") ++ "{} queries found \n\n"),
-        .{queries_amount},
+        colors.green_text("Zql{s}" ++ colors.dim_text(": ") ++ "{} queries found \n\n"),
+        .{ pure_text, queries_amount },
     );
 }
 
@@ -42,6 +42,48 @@ pub fn putCmupPlaylist(map: *std.StringHashMap(CmupPlaylist), playlist: CmupPlay
 
     for (playlist.sub_playlists) |sub_playlist| {
         try putCmupPlaylist(map, sub_playlist.*);
+    }
+}
+
+pub fn removePlaylist(
+    allocator: std.mem.Allocator,
+    playlists_path: []const u8,
+    path: []const u8,
+) !void {
+    const playlist_path = try std.fs.path.join(allocator, &[_][]const u8{ playlists_path, path });
+    defer allocator.free(playlist_path);
+
+    try std.fs.deleteFileAbsolute(playlist_path);
+}
+
+pub fn executeSideEffects(allocator: std.mem.Allocator, side_effects: []zql.SideEffect, playlist_path: []const u8) !void {
+    for (side_effects) |side_effect| {
+        switch (side_effect) {
+            .Remove => |data| try removePlaylist(allocator, playlist_path, data.playlist),
+        }
+    }
+}
+
+pub fn executeZqls(
+    allocator: std.mem.Allocator,
+    zql_paths: [][]const u8,
+    map: std.StringHashMap(CmupPlaylist),
+    playlist_path: []const u8,
+    stdout: std.fs.File.Writer,
+    pure: bool,
+) !void {
+    for (zql_paths) |path| {
+        const result = zql.run(allocator, map, path) catch {
+            std.process.exit(1);
+        };
+
+        try stdout.print(colors.green_text("") ++ " {s}\n", .{result.playlist.name});
+
+        try cmup.writeCmupPlaylist(result.playlist, playlist_path);
+
+        if (!pure) {
+            try executeSideEffects(allocator, result.side_effects.items, playlist_path);
+        }
     }
 }
 
@@ -89,21 +131,14 @@ pub fn main() !void {
             try clear(cmus_playlist_path);
         }
 
-        try printQueriesInfo(result.zql.items.len);
-
         const stdout = std.io.getStdOut().writer();
 
+        const is_pure = hasArg(args, "--pure");
+
+        try printQueriesInfo(stdout, result.zql.items.len, is_pure);
+
         if (has_write) {
-            for (result.zql.items) |path| {
-                const playlist = zql.run(allocator, map, path) catch {
-                    std.process.exit(1);
-                };
-
-                try stdout.print(colors.green_text("") ++ " {s}\n", .{playlist.name});
-
-                try cmup.writeCmupPlaylist(playlist, cmus_playlist_path);
-            }
-
+            try executeZqls(allocator, result.zql.items, map, cmus_playlist_path, stdout, hasArg(args, "--pure"));
             try printSuccess();
         } else {
             try printInfo();
