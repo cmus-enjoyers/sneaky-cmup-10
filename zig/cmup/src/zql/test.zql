@@ -1,6 +1,0 @@
-require iXOR-bed vk_____________treenokh-stwv vk_____________treenokh-all
-
-add all from iXOR-bed where name contains 'promise'
-
-add all from vk_____________treenokh-stwv 
-add all from vk_____________treenokh-all

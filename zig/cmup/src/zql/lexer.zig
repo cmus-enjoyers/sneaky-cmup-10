@@ -14,6 +14,7 @@ pub const TokenType = enum {
     MatchType,
     Comment,
     Hide,
+    As,
 
     Unknown,
 };
@@ -64,6 +65,7 @@ const ContextType = enum {
     Where,
     Comment,
     Hide,
+    As,
 };
 
 pub const Lexer = struct {
@@ -155,6 +157,11 @@ pub const Lexer = struct {
                 if (std.mem.eql(u8, lexeme, "is")) {
                     return TokenType.MatchType;
                 }
+
+                if (std.mem.eql(u8, lexeme, "as")) {
+                    try lexer.pushContext(ContextType.As);
+                    return TokenType.As;
+                }
             },
             5 => {
                 if (std.mem.eql(u8, lexeme, "where")) {
@@ -181,9 +188,9 @@ pub const Lexer = struct {
             else => {},
         }
 
-        if (lexer.peekContext()) |value| {
+        if (context) |value| {
             return switch (value) {
-                .Require, .Where, .Add, .Hide => TokenType.Identifier,
+                .Require, .Where, .Add, .As => TokenType.Identifier,
                 else => TokenType.Unknown,
             };
         }
