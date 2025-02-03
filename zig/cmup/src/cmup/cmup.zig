@@ -219,7 +219,14 @@ pub fn cmup(
     music_path: []const u8,
     playlist_path: []const u8,
 ) anyerror!CmupResult {
+    var path = music_path;
+
     const playlists = getDirEntryNames(allocator, music_path) catch blk: {
+        path = try std.fs.path.join(allocator, &.{
+            std.fs.path.dirname(music_path).?,
+            "music",
+        });
+
         break :blk try getDirEntryNames(allocator, try std.fs.path.join(allocator, &.{
             std.fs.path.dirname(music_path).?,
             "music",
@@ -234,7 +241,7 @@ pub fn cmup(
             continue;
         }
 
-        const playlist = try createCmupPlaylist(allocator, value, music_path, null, &zql_result);
+        const playlist = try createCmupPlaylist(allocator, value, path, null, &zql_result);
 
         if (write orelse false) {
             try writeCmupPlaylist(playlist, playlist_path);
