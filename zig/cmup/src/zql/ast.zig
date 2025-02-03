@@ -44,8 +44,13 @@ pub const MatchType = enum {
     }
 };
 
+pub const Source = struct {
+    source: lxer.Token,
+    as: ?lxer.Token,
+};
+
 pub const RequireData = struct {
-    sources: []lxer.Token,
+    sources: []Source,
 };
 
 const ASTMatchType = ASTData(MatchType);
@@ -121,7 +126,7 @@ pub const Parser = struct {
 
     pub fn parseRequire(parser: *Parser, token: lxer.Token) !ASTNode {
         // TODO: fix memory leak here later
-        var sources = std.ArrayList(lxer.Token).init(parser.allocator);
+        var sources = std.ArrayList(Source).init(parser.allocator);
 
         while (parser.peekNextToken()) |value| {
             if (value.type != .Identifier) {
@@ -130,7 +135,19 @@ pub const Parser = struct {
 
             parser.move();
 
-            try sources.append(value);
+            if (parser.peekNextToken()) |as_token| {
+                if (as_token.type == .As) {
+                    parser.move();
+
+                    const as_target = try parser.expectTokenType(as_token, .Identifier);
+
+                    try sources.append(Source{ .as = as_target, .source = value });
+
+                    continue;
+                }
+            }
+
+            try sources.append(Source{ .source = value, .as = null });
         }
 
         if (sources.items.len == 0) {
