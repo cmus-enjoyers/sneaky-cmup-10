@@ -68,15 +68,16 @@ pub const Executor = struct {
 
     pub fn executeRequire(executor: *Executor, data: Ast.RequireData) !void {
         for (data.sources) |source| {
-            const key = source.lexeme;
-
-            if (executor.playlists.get(key)) |playlist| {
-                try executor.identifiers.put(key, playlist);
+            if (executor.playlists.get(source.source.lexeme)) |playlist| {
+                try executor.identifiers.put(
+                    if (source.as) |as| as.lexeme else source.source.lexeme,
+                    playlist,
+                );
 
                 continue;
             }
 
-            try executor.printErr(source, err.Error.PlaylistNotFound);
+            try executor.printErr(source.source, err.Error.PlaylistNotFound);
             return error.NoPlaylist;
         }
     }

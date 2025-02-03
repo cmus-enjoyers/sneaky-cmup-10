@@ -141,9 +141,9 @@ pub const Parser = struct {
 
                     const as_target = try parser.expectTokenType(as_token, .Identifier);
 
-                    parser.move();
-
                     try sources.append(Source{ .as = as_target, .source = value });
+
+                    continue;
                 }
             }
 

@@ -35,7 +35,7 @@ pub fn printToken(
     const err_line = input[line_position..line_end];
 
     const index = std.ascii.indexOfIgnoreCase(err_line, lexeme) orelse {
-        std.debug.print(error_prefix ++ "UnknownSyntax", .{});
+        std.debug.print(error_prefix ++ "UnknownSyntax at line {}", .{line});
         return error.UnknownSyntax;
     };
 
