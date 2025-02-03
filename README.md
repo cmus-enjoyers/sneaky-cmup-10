@@ -7,6 +7,8 @@
   zig build -Doptimize=ReleaseFast install --prefix ~/.local
 ```
 
+and install [zql syntax highlighting](https://github.com/cmus-enjoyers/tree-sitter-zql) (recommended)
+
 # CmupC installation
 
 ```bash
