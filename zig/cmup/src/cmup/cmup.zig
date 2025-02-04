@@ -39,6 +39,11 @@ pub fn isMusic(file_name: []const u8) bool {
     return false;
 }
 
+pub const ZqlSrc = struct {
+    src: []const u8,
+    parent_name: []const u8,
+};
+
 pub fn isZql(file_name: []const u8) bool {
     const zql_ext = comptime ".zql";
 
@@ -234,7 +239,7 @@ pub fn cmup(
     };
 
     var result = std.ArrayList(CmupPlaylist).init(allocator);
-    var zql_result = std.ArrayList([]const u8).init(allocator);
+    var zql_result = std.ArrayList(ZqlSrc).init(allocator);
 
     for (playlists.items) |value| {
         if (std.ascii.startsWithIgnoreCase(value, ".")) {
