@@ -4,6 +4,7 @@ const clear = @import("cmup/clear.zig").clearPlaylists;
 const std = @import("std");
 const colors = @import("utils/colors.zig");
 const CmupPlaylist = cmup.CmupPlaylist;
+const path_utils = @import("utils/path.zig");
 
 // TODO: implement dollar for zql queries
 
@@ -66,18 +67,25 @@ pub fn executeSideEffects(allocator: std.mem.Allocator, side_effects: []zql.Side
 
 pub fn executeZqls(
     allocator: std.mem.Allocator,
-    zql_paths: [][]const u8,
+    zql_src: []cmup.ZqlSrc,
     map: std.StringHashMap(CmupPlaylist),
     playlist_path: []const u8,
     stdout: std.fs.File.Writer,
     pure: bool,
 ) !void {
-    for (zql_paths) |path| {
-        const result = zql.run(allocator, map, path) catch {
+    for (zql_src) |src| {
+        var result = zql.run(allocator, map, src.src) catch {
             std.process.exit(1);
         };
 
         try stdout.print(colors.green_text("") ++ " {s}\n", .{result.playlist.name});
+
+        const name = path_utils.getFileNameWithoutExtension(src.src);
+
+        if (cmup.endsWithDollar(name)) {
+            // TODO: fix memory leak here
+            result.playlist.name = try cmup.formatSubPlaylist(allocator, src.parent_name, name[0 .. name.len - 1]);
+        }
 
         try cmup.writeCmupPlaylist(result.playlist, playlist_path);
 
@@ -139,7 +147,7 @@ pub fn main() !void {
         try printQueriesInfo(stdout, result.zql.items.len, is_pure);
 
         if (has_write) {
-            // try executeZqls(allocator, result.zql.items, map, cmus_playlist_path, stdout, hasArg(args, "--pure"));
+            try executeZqls(allocator, result.zql.items, map, cmus_playlist_path, stdout, hasArg(args, "--pure"));
             try printSuccess();
         } else {
             try printInfo();

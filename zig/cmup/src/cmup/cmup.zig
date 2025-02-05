@@ -1,6 +1,7 @@
 // TODO: fully refactor cmup
 
 const std = @import("std");
+const path_utils = @import("../utils/path.zig");
 
 pub const CmupPlaylist = struct {
     name: []const u8,
@@ -109,7 +110,7 @@ pub fn printUnsuportedEntryError(name: []const u8) !void {
 }
 
 pub fn endsWithDollar(string: []const u8) bool {
-    return std.ascii.endsWithIgnoreCase(string, "$");
+    return std.ascii.endsWithIgnoreCase(path_utils.getFileNameWithoutExtension(string), "$");
 }
 
 pub fn createCmusSubPlaylist(
@@ -165,8 +166,12 @@ pub fn removeLast(string: []const u8) []const u8 {
     return string[0 .. string.len - 1];
 }
 
+pub fn formatSubPlaylist(allocator: std.mem.Allocator, parent_name: []const u8, child: []const u8) ![]const u8 {
+    return try std.mem.join(allocator, "-", &[_][]const u8{ parent_name, child });
+}
+
 pub fn expandDollar(allocator: std.mem.Allocator, path: []const u8, entry: []const u8) anyerror![]const u8 {
-    return try std.mem.join(allocator, "-", &[_][]const u8{ std.fs.path.basename(path), entry });
+    return try formatSubPlaylist(allocator, std.fs.path.basename(path), entry);
 }
 
 pub fn createCmupPlaylist(
