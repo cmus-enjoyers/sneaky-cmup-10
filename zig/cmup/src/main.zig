@@ -135,10 +135,11 @@ pub fn main() !void {
 
         const is_pure = hasArg(args, "--pure");
 
+        std.debug.print("{}\n", .{std.json.fmt(result.zql.items, .{ .whitespace = .indent_2 })});
         try printQueriesInfo(stdout, result.zql.items.len, is_pure);
 
         if (has_write) {
-            try executeZqls(allocator, result.zql.items, map, cmus_playlist_path, stdout, hasArg(args, "--pure"));
+            // try executeZqls(allocator, result.zql.items, map, cmus_playlist_path, stdout, hasArg(args, "--pure"));
             try printSuccess();
         } else {
             try printInfo();
