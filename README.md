@@ -14,7 +14,7 @@ and install [zql syntax highlighting](https://github.com/cmus-enjoyers/tree-sitt
 ```bash
   git clone --depth 1 --single-branch https://github.com/cmus-enjoyers/cmup
 
-  cp cmup/cmup-c/
+  cd cmup/cmup-c/
 
   gcc cmup.c -o ~/.local/bin
 ```
