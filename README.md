@@ -3,7 +3,7 @@
 ```bash
   git clone --depth 1 --single-branch https://github.com/cmus-enjoyers/cmup
 
-  cp cmup/zig/cmup
+  cd cmup/zig/cmup
   sudo zig build -Doptimize=ReleaseFast install --prefix ~/.local
 ```
 
