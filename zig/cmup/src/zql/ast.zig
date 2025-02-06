@@ -1,4 +1,3 @@
-// TODO: implement abstract syntax tree
 const lxer = @import("lexer.zig");
 const Lexer = lxer.Lexer;
 const std = @import("std");

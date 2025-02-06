@@ -6,8 +6,6 @@ const colors = @import("utils/colors.zig");
 const CmupPlaylist = cmup.CmupPlaylist;
 const path_utils = @import("utils/path.zig");
 
-// TODO: implement dollar for zql queries
-
 pub fn printSuccess() !void {
     const writer = std.io.getStdOut().writer();
 

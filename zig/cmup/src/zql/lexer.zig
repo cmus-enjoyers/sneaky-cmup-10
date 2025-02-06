@@ -281,7 +281,6 @@ pub const Lexer = struct {
             }
         }
 
-        // TODO: refactor this later (or keep it because it's just simple fix)
         const lexeme = if (is_string) lexer.input[start + 1 .. lexer.position - 1] else lexer.input[start..lexer.position];
 
         const token_type = if (is_string) TokenType.String else try lexer.getTokenType(lexeme);
