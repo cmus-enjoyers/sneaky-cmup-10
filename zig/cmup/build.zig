@@ -37,13 +37,21 @@ pub fn build(b: *std.Build) void {
     // installation directory rather than directly from within the cache directory.
     // This is not necessary, however, if the application depends on other installed
     // files, this ensures they will be present and in the expected location.
-    run_cmd.step.dependOn(b.getInstallStep());
+    const install_step = b.getInstallStep();
+
+    run_cmd.step.dependOn(install_step);
 
     // This allows the user to pass arguments to the application in the build
     // command itself, like this: `zig build run -- arg1 arg2 etc`
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
+
+    const man_pages_path = std.fs.path.relative(b.allocator, b.install_path, "/usr/share/man/man1/zmup.1") catch return;
+
+    const file = b.addInstallFile(b.path("./zmupman.1"), man_pages_path);
+
+    install_step.dependOn(&file.step);
 
     // This creates a build step. It will be visible in the `zig build --help` menu,
     // and can be selected like this: `zig build run`
