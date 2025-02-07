@@ -12,7 +12,6 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    exe.addIncludePath(b.path("include"));
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);
@@ -25,9 +24,7 @@ pub fn build(b: *std.Build) void {
         run_cmd.addArgs(args);
     }
 
-    const pages_path = std.fs.path.relative(b.allocator, b.install_path, "/usr/share/man/man1/zmup.1") catch return;
-
-    const file = b.addInstallFile(b.path("./man.1"), pages_path);
+    const file = b.addInstallFile(b.path("./man.1"), "share/man/man1/zmup.1");
     install_step.dependOn(&file.step);
 
     const run_step = b.step("run", "Run the cmup");

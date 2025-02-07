@@ -4,7 +4,7 @@
   git clone --depth 1 --single-branch https://github.com/cmus-enjoyers/cmup
 
   cd cmup/zig/cmup
-  sudo zig build -Doptimize=ReleaseFast install --prefix ~/.local
+  sudo zig build -Doptimize=ReleaseFast install -p ~/.local
 ```
 
 and install [zql syntax highlighting](https://github.com/cmus-enjoyers/tree-sitter-zql) (recommended)
