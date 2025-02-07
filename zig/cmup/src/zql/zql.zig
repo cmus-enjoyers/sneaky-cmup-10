@@ -38,8 +38,6 @@ pub fn run(
     map: std.StringHashMap(CmupPlaylist),
     path: []const u8,
 ) !executr.ExecutorResult {
-    _ = map;
-
     var arena = std.heap.ArenaAllocator.init(parent_allocator);
     defer arena.deinit();
 
@@ -61,21 +59,7 @@ pub fn run(
 
     try parser.parse();
 
-    // var executor = Executor.init(allocator, map, parser.nodes.items, std.io.getStdErr(), query);
-    //
-    // const name = getFileNameWithoutExtension(path);
-    //
-    // const result = try executor.execute(name);
+    var executor = Executor.init(allocator, map, parser.nodes.items, std.io.getStdErr(), query);
 
-    std.debug.print("{}\n", .{std.json.fmt(parser.nodes.items, .{ .whitespace = .indent_2 })});
-
-    return executr.ExecutorResult{
-        .playlist = CmupPlaylist{
-            .content = &[_][]const u8{},
-            .name = "dsfsd",
-            .sub_playlists = &[_]*CmupPlaylist{},
-            .path = "",
-        },
-        .side_effects = std.ArrayList(SideEffect).init(allocator),
-    };
+    return executor.execute(getFileNameWithoutExtension(path));
 }
