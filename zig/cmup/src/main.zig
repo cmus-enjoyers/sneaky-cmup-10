@@ -123,6 +123,14 @@ pub fn main() !void {
         const cmus_playlist_path = try std.fs.path.join(allocator, &[_][]const u8{ value, ".config/cmus/playlists" });
         const cmus_music_path = try std.fs.path.join(allocator, &.{ value, "Music" });
 
+        const stdout = std.io.getStdOut().writer();
+
+        if (args.len == 2 and std.mem.eql(u8, args[1], "clear")) {
+            try clear(cmus_playlist_path);
+            try stdout.writeAll("cleared playlists\n");
+            return;
+        }
+
         var result = try cmup.cmup(allocator, has_write, cmus_music_path, cmus_playlist_path);
         defer result.deinit();
 
@@ -132,12 +140,6 @@ pub fn main() !void {
         if (hasArg(args, "--print-everything")) {
             try cmup.printCmupPlaylists(result.playlists.items, "");
         }
-
-        if (args.len == 2 and std.mem.eql(u8, args[1], "clear")) {
-            try clear(cmus_playlist_path);
-        }
-
-        const stdout = std.io.getStdOut().writer();
 
         const is_pure = hasArg(args, "--pure");
 
