@@ -213,6 +213,16 @@ pub const Parser = struct {
 
             const filter = try parser.parseFilter(value);
 
+            while (parser.peekNextToken()) |token| {
+                if (token.type != .Or) {
+                    break;
+                }
+
+                parser.move();
+
+                try filters.append(try parser.parseFilter(value));
+            }
+
             try filters.append(filter);
 
             return filters.items;
