@@ -182,6 +182,22 @@ pub const Parser = struct {
         return token;
     }
 
+    pub fn parseFilter(parser: *Parser, prev_token: lxer.Token) !ASTFilter {
+        const name = try parser.expectTokenType(prev_token, .Identifier);
+        const match_type = try parser.expectTokenType(name, .MatchType);
+        const target = try parser.expectTokenType(match_type, .String);
+
+        return ASTFilter{
+            .data = .{
+                .field = name,
+                .match_type = ASTMatchType.init(try MatchType.toMatchType(match_type.lexeme), match_type),
+
+                .target = target,
+            },
+            .token = target,
+        };
+    }
+
     pub fn parseFilters(parser: *Parser) !?[]ASTFilter {
         const nextToken = parser.peekNextToken();
 
@@ -195,20 +211,9 @@ pub const Parser = struct {
             // TODO: fix memory leaks here
             var filters = std.ArrayList(ASTFilter).init(parser.allocator);
 
-            const name = try parser.expectTokenType(value, .Identifier);
-            const match_type = try parser.expectTokenType(name, .MatchType);
-            const target = try parser.expectTokenType(match_type, .String);
+            const filter = try parser.parseFilter(value);
 
-            // TODO: impleemnt multiple filters parsing in lexer
-
-            try filters.append(ASTFilter{
-                .data = .{
-                    .field = name,
-                    .match_type = ASTMatchType.init(try MatchType.toMatchType(match_type.lexeme), match_type),
-                    .target = target,
-                },
-                .token = target,
-            });
+            try filters.append(filter);
 
             return filters.items;
         }

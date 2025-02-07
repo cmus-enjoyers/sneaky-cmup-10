@@ -76,8 +76,6 @@ pub fn executeZqls(
             std.process.exit(1);
         };
 
-        try stdout.print(colors.green_text("") ++ " {s}\n", .{result.playlist.name});
-
         const name = path_utils.getFileNameWithoutExtension(src.src);
 
         if (cmup.endsWithDollar(name)) {
@@ -86,6 +84,8 @@ pub fn executeZqls(
         }
 
         try cmup.writeCmupPlaylist(result.playlist, playlist_path);
+
+        try stdout.print(colors.green_text("") ++ " {s}\n", .{result.playlist.name});
 
         if (!pure) {
             try executeSideEffects(allocator, result.side_effects.items, playlist_path);
