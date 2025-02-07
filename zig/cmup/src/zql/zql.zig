@@ -61,9 +61,5 @@ pub fn run(
 
     var executor = Executor.init(allocator, map, parser.nodes.items, std.io.getStdErr(), query);
 
-    const name = getFileNameWithoutExtension(path);
-
-    const result = try executor.execute(name);
-
-    return result;
+    return executor.execute(getFileNameWithoutExtension(path));
 }

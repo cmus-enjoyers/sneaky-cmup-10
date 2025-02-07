@@ -15,6 +15,7 @@ pub const TokenType = enum {
     Comment,
     Hide,
     As,
+    Or,
 
     Unknown,
 };
@@ -161,6 +162,10 @@ pub const Lexer = struct {
                 if (std.mem.eql(u8, lexeme, "as")) {
                     try lexer.pushContext(ContextType.As);
                     return TokenType.As;
+                }
+
+                if (std.mem.eql(u8, lexeme, "or")) {
+                    return TokenType.Or;
                 }
             },
             5 => {

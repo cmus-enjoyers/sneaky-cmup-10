@@ -76,8 +76,6 @@ pub fn executeZqls(
             std.process.exit(1);
         };
 
-        try stdout.print(colors.green_text("") ++ " {s}\n", .{result.playlist.name});
-
         const name = path_utils.getFileNameWithoutExtension(src.src);
 
         if (cmup.endsWithDollar(name)) {
@@ -86,6 +84,8 @@ pub fn executeZqls(
         }
 
         try cmup.writeCmupPlaylist(result.playlist, playlist_path);
+
+        try stdout.print(colors.green_text("") ++ " {s}\n", .{result.playlist.name});
 
         if (!pure) {
             try executeSideEffects(allocator, result.side_effects.items, playlist_path);
@@ -123,6 +123,14 @@ pub fn main() !void {
         const cmus_playlist_path = try std.fs.path.join(allocator, &[_][]const u8{ value, ".config/cmus/playlists" });
         const cmus_music_path = try std.fs.path.join(allocator, &.{ value, "Music" });
 
+        const stdout = std.io.getStdOut().writer();
+
+        if (args.len == 2 and std.mem.eql(u8, args[1], "clear")) {
+            try clear(cmus_playlist_path);
+            try stdout.writeAll("cleared playlists\n");
+            return;
+        }
+
         var result = try cmup.cmup(allocator, has_write, cmus_music_path, cmus_playlist_path);
         defer result.deinit();
 
@@ -133,15 +141,8 @@ pub fn main() !void {
             try cmup.printCmupPlaylists(result.playlists.items, "");
         }
 
-        if (args.len == 2 and std.mem.eql(u8, args[1], "clear")) {
-            try clear(cmus_playlist_path);
-        }
-
-        const stdout = std.io.getStdOut().writer();
-
         const is_pure = hasArg(args, "--pure");
 
-        std.debug.print("{}\n", .{std.json.fmt(result.zql.items, .{ .whitespace = .indent_2 })});
         try printQueriesInfo(stdout, result.zql.items.len, is_pure);
 
         if (has_write) {
