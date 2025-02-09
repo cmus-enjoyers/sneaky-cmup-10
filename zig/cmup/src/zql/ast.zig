@@ -166,13 +166,13 @@ pub const Parser = struct {
         };
     }
 
-    pub fn expectTokenType(parser: *Parser, current_token: lxer.Token, expectedType: lxer.TokenType) !lxer.Token {
+    pub fn expectTokenType(parser: *Parser, current_token: lxer.Token, expeceted_type: lxer.TokenType) !lxer.Token {
         const token = parser.peekNextToken() orelse {
             try parser.printSyntaxError(current_token);
             return error.SyntaxError;
         };
 
-        if (token.type != expectedType) {
+        if (token.type != expeceted_type) {
             try parser.printSyntaxError(token);
             return error.SyntaxError;
         }

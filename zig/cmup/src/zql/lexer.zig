@@ -195,7 +195,7 @@ pub const Lexer = struct {
 
         if (context) |value| {
             return switch (value) {
-                .Require, .Where, .Add, .As => TokenType.Identifier,
+                .Require, .Where, .Add, .As, .Hide => TokenType.Identifier,
                 else => TokenType.Unknown,
             };
         }

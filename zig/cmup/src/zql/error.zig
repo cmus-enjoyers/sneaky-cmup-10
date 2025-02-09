@@ -34,8 +34,10 @@ pub fn printToken(
 
     const err_line = input[line_position..line_end];
 
+    const error_message = getErrorMessage(err);
+
     const index = std.ascii.indexOfIgnoreCase(err_line, lexeme) orelse {
-        std.debug.print(error_prefix ++ "UnknownSyntax at line {}", .{line});
+        std.debug.print(error_prefix ++ "{s} at line {}\n", .{ error_message, line });
         return error.UnknownSyntax;
     };
 
@@ -58,7 +60,7 @@ pub fn printToken(
         allocator,
         colors.red_text("Error") ++ colors.dim_text(" => ") ++ "{s} at line {}\n\n" ++ colors.dim_text("{} ▎ ") ++ "{s}\n",
         .{
-            getErrorMessage(err),
+            error_message,
             line,
             line,
             msg,
