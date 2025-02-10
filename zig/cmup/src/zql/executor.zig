@@ -9,6 +9,19 @@ const NodeType = Ast.NodeType;
 const ASTNode = Ast.ASTNode;
 const filterByName = @import("filters/filter-by-name.zig").filterByName;
 const err = @import("error.zig");
+const levenshteinDistance = @import("../levenshtein/levenshtein.zig").levenshteinDistance;
+const findClosestIdentifier = @import("identifier-errors.zig").findClosestIdentifier;
+
+pub const IdentifierLevenshteinDistance = struct {
+    value: *[]const u8,
+    distance: usize,
+};
+
+fn identifierDistanceLessThan(context: void, a: IdentifierLevenshteinDistance, b: IdentifierLevenshteinDistance) bool {
+    _ = context;
+
+    return a.distance < b.distance;
+}
 
 pub const SideEffectType = enum {
     Remove,
@@ -78,6 +91,9 @@ pub const Executor = struct {
             }
 
             try executor.printErr(source.source, err.Error.PlaylistNotFound);
+            std.debug.print("\nDid you mean `{s}`?\n", .{
+                try findClosestIdentifier(executor.allocator, executor.playlists, source.source.lexeme),
+            });
             return error.NoPlaylist;
         }
     }
@@ -110,6 +126,11 @@ pub const Executor = struct {
         }
 
         try executor.printErr(data.source, err.Error.ReferenceError);
+
+        // TODO: remove std.debug.print
+        std.debug.print("\nDid you mean `{s}`?\n", .{
+            try findClosestIdentifier(executor.allocator, executor.identifiers, data.source.lexeme),
+        });
         return error.ReferenceError;
     }
 
