@@ -9,6 +9,18 @@ const NodeType = Ast.NodeType;
 const ASTNode = Ast.ASTNode;
 const filterByName = @import("filters/filter-by-name.zig").filterByName;
 const err = @import("error.zig");
+const levenshteinDistance = @import("../levenshtein/levenshtein.zig").levenshteinDistance;
+
+pub const IdentifierLevenshteinDistance = struct {
+    value: *[]const u8,
+    distance: usize,
+};
+
+fn identifierDistanceLessThan(context: void, a: IdentifierLevenshteinDistance, b: IdentifierLevenshteinDistance) bool {
+    _ = context;
+
+    return a.distance < b.distance;
+}
 
 pub const SideEffectType = enum {
     Remove,
@@ -109,7 +121,29 @@ pub const Executor = struct {
             return;
         }
 
+        var iter = executor.identifiers.iterator();
+        var array = std.ArrayList(IdentifierLevenshteinDistance).init(executor.allocator);
+        defer array.deinit();
+
+        // TODO: move this into separate function
+        while (iter.next()) |value| {
+            try array.append(
+                IdentifierLevenshteinDistance{
+                    .value = value.key_ptr,
+                    .distance = try levenshteinDistance(
+                        executor.allocator,
+                        value.key_ptr.*,
+                        data.source.lexeme,
+                    ),
+                },
+            );
+        }
+
+        std.sort.insertion(IdentifierLevenshteinDistance, array.items, {}, identifierDistanceLessThan);
+
         try executor.printErr(data.source, err.Error.ReferenceError);
+
+        std.debug.print("\nDid you mean `{s}`?\n", .{array.items[0].value.*});
         return error.ReferenceError;
     }
 
