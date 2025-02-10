@@ -10,6 +10,7 @@ const ASTNode = Ast.ASTNode;
 const filterByName = @import("filters/filter-by-name.zig").filterByName;
 const err = @import("error.zig");
 const levenshteinDistance = @import("../levenshtein/levenshtein.zig").levenshteinDistance;
+const findClosestIdentifier = @import("identifier-errors.zig").findClosestIdentifier;
 
 pub const IdentifierLevenshteinDistance = struct {
     value: *[]const u8,
@@ -121,29 +122,11 @@ pub const Executor = struct {
             return;
         }
 
-        var iter = executor.identifiers.iterator();
-        var array = std.ArrayList(IdentifierLevenshteinDistance).init(executor.allocator);
-        defer array.deinit();
-
-        // TODO: move this into separate function
-        while (iter.next()) |value| {
-            try array.append(
-                IdentifierLevenshteinDistance{
-                    .value = value.key_ptr,
-                    .distance = try levenshteinDistance(
-                        executor.allocator,
-                        value.key_ptr.*,
-                        data.source.lexeme,
-                    ),
-                },
-            );
-        }
-
-        std.sort.insertion(IdentifierLevenshteinDistance, array.items, {}, identifierDistanceLessThan);
-
         try executor.printErr(data.source, err.Error.ReferenceError);
 
-        std.debug.print("\nDid you mean `{s}`?\n", .{array.items[0].value.*});
+        std.debug.print("\nDid you mean `{s}`?\n", .{
+            try findClosestIdentifier(executor.allocator, executor.identifiers, data.source.lexeme),
+        });
         return error.ReferenceError;
     }
 
